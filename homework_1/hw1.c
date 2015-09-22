@@ -136,6 +136,8 @@ int main(int argc, char *argv[]){
 					XDrawPoint(display, win, red_gc, report.xbutton.x, report.xbutton.y);
 				}
 				break;
+			default:
+				break;
 		}
 	}
 	return 0;
