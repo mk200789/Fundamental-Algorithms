@@ -20,6 +20,8 @@ XEvent report;
 XColor green_col, red_col;
 Colormap colormap;
 
+unsigned int win_width, win_height;
+
 char green[] = "#00FF00";
 char red[] = "#A80000";
 
@@ -128,12 +130,19 @@ int main(int argc, char *argv[]){
 				break;
 			case ButtonPress:
 				printf("Button press %d, %d.\n",report.xbutton.x, report.xbutton.y);
+				win_width = 500;
+				win_height = 500;
+				int x, y;
+				x = report.xbutton.x;
+				y = report.xbutton.y;
 				if (report.xbutton.button == Button1){
 					/* left click */
-					XDrawPoint(display, win, green_gc, report.xbutton.x, report.xbutton.y);
+					//XDrawPoint(display, win, green_gc, report.xbutton.x, report.xbutton.y);
+					XFillArc( display, win, green_gc, x -win_height/40, y- win_height/40, win_height/20, win_height/20, 0, 360*64);
 				}
 				else{
-					XDrawPoint(display, win, red_gc, report.xbutton.x, report.xbutton.y);
+					//XDrawPoint(display, win, red_gc, report.xbutton.x, report.xbutton.y);
+					XFillArc( display, win, red_gc, x -win_height/40, y- win_height/40, win_height/20, win_height/20, 0, 360*64);
 				}
 				break;
 			default:
