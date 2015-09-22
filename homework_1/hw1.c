@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
 	display = XOpenDisplay(NULL);
 
 	//Creating window
-	win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, 500, 500, 0, BlackPixel (display, 0), BlackPixel (display, 0));
+	win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, 500, 500, 10, BlackPixel (display, 0), BlackPixel (display, 0));
 	
 	//Maps window on screen
 	XMapWindow(display, win);
@@ -48,7 +48,8 @@ int main(int argc, char *argv[]){
 		switch(report.type){
 			case Expose:
 				//printf("Exposed.");
-				XDrawRectangle(display, win, green_gc, 10, 10, 398, 398);
+				XDrawRectangle(display, win, green_gc, 50, 50, 398, 398);
+				XDrawLine(display, win, green_gc, 10, 10, 400, 400);
 				XFlush(display);
 				break;
 			case KeyPress:
