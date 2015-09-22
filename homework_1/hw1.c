@@ -58,6 +58,10 @@ int main(int argc, char *argv[]){
 					exit(0);
 				}
 				break;
+			case ButtonPress:
+				printf("Button press %d, %d.\n",report.xbutton.x, report.xbutton.y);
+				XDrawPoint(display, win, green_gc, report.xbutton.x, report.xbutton.y);
+				break;
 		}
 	}
 	return 0;
