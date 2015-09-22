@@ -9,25 +9,56 @@
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 Display *display;
 Window win;
-GC gc;
+GC green_gc;
+XEvent report;
+XColor green_col;
+Colormap colormap;
+
+char green[] = "#00FF00";
 
 int main(int argc, char *argv[]){
 	display = XOpenDisplay(NULL);
 
 	//Creating window
-	win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, 250, 500, \
-		0, BlackPixel (display, 0), WhitePixel (display, 0));
+	win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, 500, 500, 0, BlackPixel (display, 0), BlackPixel (display, 0));
 	
 	//Maps window on screen
 	XMapWindow(display, win);
+
+	colormap = DefaultColormap(display, 0);
+	green_gc = XCreateGC(display, win, 0, 0);
+	XParseColor(display, colormap, green, &green_col);
+	XAllocColor(display, colormap, &green_col);
+	XSetForeground(display, green_gc, green_col.pixel);
+
+	XSelectInput(display, win, ExposureMask | KeyPressMask | ButtonPressMask);
+
+	//XDrawRectangle(display, win, green_gc, 10, 10, 398, 398);
+
+
 	XFlush(display);
 	
-	//Sleep for 10 seconds befor closing
-	sleep(10);
+	while(1){
+		XNextEvent(display, &report);
+		switch(report.type){
+			case Expose:
+				//printf("Exposed.");
+				XDrawRectangle(display, win, green_gc, 10, 10, 398, 398);
+				XFlush(display);
+				break;
+			case KeyPress:
+				//when q is presss program is closed.
+				if ((XLookupKeysym(&report.xkey, 0) == XK_q)){
+					exit(0);
+				}
+				break;
+		}
+	}
 	return 0;
 }
 
