@@ -139,12 +139,6 @@ int main(int argc, char *argv[]){
 				XFlush(display);
 				break;
 			}
-			case KeyPress:
-				//when q is presss program is closed.
-				if ((XLookupKeysym(&report.xkey, 0) == XK_q)){
-					exit(0);
-				}
-				break;
 			case ButtonPress:
 				printf("Button press %d, %d.\n",report.xbutton.x, report.xbutton.y);
 				int x, y;
