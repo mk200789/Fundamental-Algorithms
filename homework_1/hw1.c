@@ -13,6 +13,12 @@
 #include <stdlib.h>
 #include <math.h>
 
+typedef int bool;
+#define true 1
+#define false 0
+
+int intersect = false;
+
 Display *display;
 Window win;
 GC green_gc, red_gc, black_gc;
@@ -26,7 +32,7 @@ unsigned int win_width, win_height;
 unsigned int start_x, start_y , target_x, target_y;
 
 //count keep track of the left clicks
-int count;
+int count, count_intersect;
 
 int ABS, ABT, STA, STB;
 
@@ -35,12 +41,24 @@ char red[] = "#A80000";
 char black[] = "#000000";
 
 
-int orientation(int ax, int ay, int bx, int by, int cx, int cy){
-	//printf("%d\n", ((ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax)));
+int orientation(int ax, int ay, int bx, int by, int cx, int cy)
+{
 	return (ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax);
 }
 
-void Draw(char *argv[]){
+double find_distance(int x1, int y1, int x2, int y2)
+{
+	return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+}
+
+int main(int argc, char *argv[]){
+	display = XOpenDisplay(NULL);
+	win_height = 500;
+	win_width = 500;
+	count = 0;
+	count_intersect = 0;
+
+
 	FILE *fp;
 	char buff[1000];
 	int ch, i;
@@ -63,43 +81,9 @@ void Draw(char *argv[]){
 				line_count++;
 			}
 		}
-
 		rewind(fp);
-
-		//printf("Total lines:  %d\n", line_count+1);
-
-		/* go through characters per line */
-		int m[line_count][2];
-
-		for(i=0;i<=line_count;i++){
-			//store formatted input file in array m
-			fscanf(fp, "%d,%d", &m[i][0], &m[i][1]);
-			//printf("%d %d\n", m[i][0], m[i][1]);
-
-			//Magnify points by 2
-			m[i][0] = (m[i][0]*4);
-			m[i][1] = (m[i][1]*4);
-
-			//printf("Scaled coordinates: %d, %d\n", m[i][0], m[i][1]);
-		}
-
-		for(i=0;i<line_count;i++){
-			/* draw lines */
-			XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[i+1][0], m[i+1][1]);
-		}
-		//XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[0][0], m[0][1]);
-		rewind(fp);
-		
-		//printf("Close file.");
-		fclose(fp);
 	}
-}
 
-int main(int argc, char *argv[]){
-	display = XOpenDisplay(NULL);
-	win_height = 500;
-	win_width = 500;
-	count = 0;
 
 	//Creating window
 	win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, win_width, win_height, 10, WhitePixel (display, 0), WhitePixel (display, 0));
@@ -130,10 +114,31 @@ int main(int argc, char *argv[]){
 		XNextEvent(display, &report);
 		switch(report.type){
 			case Expose:
-				Draw(argv);
+			{
+				int m[line_count][2];
+
+				for(i=0;i<=line_count;i++){
+					//store formatted input file in array m
+					fscanf(fp, "%d,%d", &m[i][0], &m[i][1]);
+					//printf("%d %d\n", m[i][0], m[i][1]);
+
+					//Magnify points by 2
+					m[i][0] = (m[i][0]*4);
+					m[i][1] = (m[i][1]*4);
+
+					//printf("Scaled coordinates: %d, %d\n", m[i][0], m[i][1]);
+				}
+
+				for(i=0;i<line_count;i++){
+					/* draw lines */
+					XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[i+1][0], m[i+1][1]);
+				}
+				//XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[0][0], m[0][1]);
+				rewind(fp);
 				printf("exposed\n");
 				XFlush(display);
 				break;
+			}
 			case KeyPress:
 				//when q is presss program is closed.
 				if ((XLookupKeysym(&report.xkey, 0) == XK_q)){
@@ -143,19 +148,21 @@ int main(int argc, char *argv[]){
 			case ButtonPress:
 				printf("Button press %d, %d.\n",report.xbutton.x, report.xbutton.y);
 				int x, y;
+				double distance1;
 				x = report.xbutton.x;
 				y = report.xbutton.y;
 				if (report.xbutton.button == Button1){
 					/* left click */
-					XFillArc( display, win, black_gc, x, y, win_width/150, win_width/150, 0, 360*64);
+					XFillArc( display, win, black_gc, x, y, win_width/200, win_width/200, 0, 360*64);
 				}
 				else{
 					//XFillArc( display, win, red_gc, x, y, win_width/150, win_width/150, 0, 360*64);
-					printf("Closing Window.");
+					printf("Closing Window.\n");
 					XDestroyWindow(display, win);
 					XCloseDisplay(display);
 					exit(1);
 				}
+
 
 				printf("count: %d\n", count);
 				if (count == 0){
@@ -164,33 +171,17 @@ int main(int argc, char *argv[]){
 				}
 				else if (count == 1){
 					target_x = x;
-					target_y = y; 
-
-					XDrawLine(display, win, black_gc, start_x, start_y, target_x, target_y);
+					target_y = y;
 
 					printf("Count less than 2\n");
 					printf("point x: %d, point y: %d\n", x, y);
 
-					FILE *fp;
-					char buff[1000];
-					int ch, i;
-					int line_count = 0;
-					
-					fp = fopen(argv[1], "r");
-					while(1){
-						ch = fgetc(fp);
-						if(feof(fp)){
-							break;
-						}
-						if (ch == '\n'){
-							line_count++;
-						}
-					}
-					rewind(fp);
 					int vertex[line_count][2];
+					int total_intersection[line_count][2];
 
 					for(i=0;i<=line_count;i++){
 						//store formatted input file in array m
+						printf("STORING1\n");
 						fscanf(fp, "%d,%d", &vertex[i][0], &vertex[i][1]);
 
 						vertex[i][0] = (vertex[i][0]*4);
@@ -198,29 +189,82 @@ int main(int argc, char *argv[]){
 					}
 					rewind(fp);
 
+					
 
 					for(i=0; i<line_count; i++){
+						printf("COMPARING\n");
 
 						ABS = orientation(vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1], start_x, start_y);
 						ABT = orientation(vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1], target_x, target_y);
 						STA = orientation(start_x, start_y, target_x, target_y, vertex[i][0], vertex[i][1]);
 						STB = orientation(start_x, start_y, target_x, target_y, vertex[i+1][0], vertex[i+1][1]);
 
-						printf("%d\n", ABS*ABT);
-						printf("%d\n", STA*STB);
-
+						//printf("%d\n", ABS*ABT);
+						//printf("%d\n", STA*STB);
 
 						if((ABS*ABT) < 0 && (STA*STB) < 0){
 							printf("Lines intersects.\n");
+							count = -1;
+
+							total_intersection[count_intersect][0]= vertex[i][0];
+							total_intersection[count_intersect][1]= vertex[i][1];
+							total_intersection[count_intersect+1][0]= vertex[i+1][0];
+							total_intersection[count_intersect+1][1]= vertex[i+1][1];
+							printf("%d, %d\n", total_intersection[count_intersect][0], total_intersection[count_intersect][1]);
+							printf("%d, %d\n", total_intersection[count_intersect+1][0], total_intersection[count_intersect+1][1]);
+							count_intersect++;
+							//break;
 						}
 						else{
 							printf("Lines does not intersects.\n");
+							//break;
 						}
 					}
 
+					//stores the distance of the points it intersects
+					int h[1][2];
+					printf("total intersection: %d\n", count_intersect);
+					double distance2;
 					
-					fclose(fp);
+					if (count_intersect > 0){
+						printf("IF1\n");
 
+						for(i = 0; i < count_intersect+1; i++){
+							printf("%d, %d\n", total_intersection[i][0], total_intersection[i][1]);
+							distance1 = find_distance(start_x, start_y, total_intersection[i][0], total_intersection[i][1]);
+							printf("The distance to %d, %d is %f\n", total_intersection[i][0], total_intersection[i][1] ,distance1);
+
+
+							if (i == 0){
+								printf("ZERO\n");
+								h[0][0] = total_intersection[i][0];
+								h[0][1] = total_intersection[i][1];
+							}
+							else{
+								distance2 = find_distance(start_x, start_y, h[0][0], h[0][1]);
+								printf("%f\n", distance1);
+								printf("%f\n", distance2);
+								if(distance1 < distance2){
+									h[0][0] = total_intersection[i][0];
+									h[0][1] = total_intersection[i][1];
+								}
+							}
+						}
+
+
+						printf("%d, %d, %f\n", h[0][0], h[0][1], find_distance(start_x, start_y, h[0][0], h[0][1]));
+						XDrawLine(display, win, black_gc, start_x, start_y, h[0][0], h[0][1]);
+					}
+					else{
+						printf("IF2\n");
+						XDrawLine(display, win, black_gc, start_x, start_y, target_x, target_y);
+						count = -1;
+					}
+
+					
+
+					//rewind(fp);
+					count_intersect = 0;
 				}
 				else{
 					printf("Count equal or more than 2\n");
@@ -234,6 +278,7 @@ int main(int argc, char *argv[]){
 				break;
 		}
 	}
+	fclose(fp);
 	return 0;
 }
 
