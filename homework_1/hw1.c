@@ -150,7 +150,6 @@ int main(int argc, char *argv[]){
 					XFillArc( display, win, black_gc, x, y, win_width/200, win_width/200, 0, 360*64);
 				}
 				else{
-					//XFillArc( display, win, red_gc, x, y, win_width/150, win_width/150, 0, 360*64);
 					printf("Closing Window.\n");
 					XDestroyWindow(display, win);
 					XCloseDisplay(display);
@@ -175,7 +174,6 @@ int main(int argc, char *argv[]){
 
 					for(i=0;i<=line_count;i++){
 						//store formatted input file in array m
-						printf("STORING1\n");
 						fscanf(fp, "%d,%d", &vertex[i][0], &vertex[i][1]);
 
 						vertex[i][0] = (vertex[i][0]*4);
@@ -186,8 +184,6 @@ int main(int argc, char *argv[]){
 					
 
 					for(i=0; i<line_count; i++){
-						printf("COMPARING\n");
-
 						ABS = orientation(vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1], start_x, start_y);
 						ABT = orientation(vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1], target_x, target_y);
 						STA = orientation(start_x, start_y, target_x, target_y, vertex[i][0], vertex[i][1]);
@@ -221,7 +217,6 @@ int main(int argc, char *argv[]){
 					double distance2;
 					
 					if (count_intersect > 0){
-						printf("IF1\n");
 
 						for(i = 0; i < count_intersect+1; i++){
 							printf("%d, %d\n", total_intersection[i][0], total_intersection[i][1]);
@@ -230,7 +225,6 @@ int main(int argc, char *argv[]){
 
 
 							if (i == 0){
-								printf("ZERO\n");
 								h[0][0] = total_intersection[i][0];
 								h[0][1] = total_intersection[i][1];
 							}
@@ -250,7 +244,6 @@ int main(int argc, char *argv[]){
 						XDrawLine(display, win, black_gc, start_x, start_y, h[0][0], h[0][1]);
 					}
 					else{
-						printf("IF2\n");
 						XDrawLine(display, win, black_gc, start_x, start_y, target_x, target_y);
 						count = -1;
 					}
