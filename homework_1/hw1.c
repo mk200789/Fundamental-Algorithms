@@ -5,6 +5,7 @@
 	Wan Kim Mok
 	Due: September 30, 2015
 */
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
@@ -46,6 +47,15 @@ int orientation(int ax, int ay, int bx, int by, int cx, int cy)
 	return (ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax);
 }
 
+int is_inTrangle(int px, int py, int ax, int ay, int bx, int by, int cx, int cy)
+{
+	int r1, r2, r3, r4, r5, r6;
+	r1 = orientation(px, py, ax, ay, bx, by)*orientation(cx, cy, ax, ay, bx, by);
+	r2 = orientation(px, py, bx, by, cx, cy)*orientation(ax, ay, bx, by, cx, cy);
+	r3 = orientation(px, py, ax, ay, cx, cy)*orientation(bx, by, ax, ay, cx, cy);
+	return  r1, r2, r3
+}
+
 double find_distance(int x1, int y1, int x2, int y2)
 {
 	return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
@@ -57,7 +67,6 @@ int main(int argc, char *argv[]){
 	win_width = 500;
 	count = 0;
 	count_intersect = 0;
-
 
 	FILE *fp;
 	char buff[1000];
@@ -238,7 +247,6 @@ int main(int argc, char *argv[]){
 								}
 							}
 						}
-
 
 						printf("%d, %d, %f\n", h[0][0], h[0][1], find_distance(start_x, start_y, h[0][0], h[0][1]));
 						XDrawLine(display, win, black_gc, start_x, start_y, h[0][0], h[0][1]);
