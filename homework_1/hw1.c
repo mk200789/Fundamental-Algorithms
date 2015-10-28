@@ -36,6 +36,7 @@ unsigned int start_x, start_y , target_x, target_y;
 int count, count_intersect;
 
 int ABS, ABT, STA, STB;
+int PAB, PBC, PAC, CAB, BAC, ABC;
 
 char green[] = "#00FF00";
 char red[] = "#A80000";
@@ -47,7 +48,7 @@ int orientation(int ax, int ay, int bx, int by, int cx, int cy)
 	return (ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax);
 }
 
-int is_inTrangle(int x)//int px, int py, int ax, int ay, int bx, int by, int cx, int cy)
+int is_inTrangle(int px, int py, int ax, int ay, int bx, int by, int cx, int cy)
 {
 	int r1, r2, r3, r4, r5, r6;
 	r1 = orientation(px, py, ax, ay, bx, by)*orientation(cx, cy, ax, ay, bx, by);
@@ -201,6 +202,28 @@ int main(int argc, char *argv[]){
 
 						//printf("%d\n", ABS*ABT);
 						//printf("%d\n", STA*STB);
+
+						//check if starting point in triangle
+						if (i % 3 == 0){
+							printf("####### check if starting point in triangle #######\n");
+							PAB = orientation(start_x, start_y, vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1]);
+							PBC = orientation(start_x, start_y, vertex[i+1][0], vertex[i+1][1], vertex[i+2][0], vertex[i+2][1]);
+							PAC = orientation(start_x, start_y, vertex[i][0], vertex[i][1], vertex[i+2][0], vertex[i+2][1]);
+							CAB = orientation(vertex[i+2][0], vertex[i+2][1], vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1]);
+							ABC = orientation(vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1], vertex[i+2][0], vertex[i+2][1]);
+							BAC = orientation(vertex[i+1][0], vertex[i+1][1], vertex[i][0], vertex[i][1], vertex[i+2][0], vertex[i+2][1]);
+
+							printf("pab * cab = %d\n", PAB*CAB);
+							printf("pbc * abc = %d\n", PBC*ABC);
+							printf("pac * bac = %d\n", PAC*BAC);
+
+							if (PAB*CAB > 0  && PBC*ABC > 0 && PAC*BAC > 0 ){
+								printf("STARTING POINT IS IN THE TRIANGLE.\n");
+							}
+							else{
+								printf("STARTING POINT IS NOT IN THE TRIANGLE.\n");
+							}
+						}
 
 						if((ABS*ABT) < 0 && (STA*STB) < 0){
 							printf("Lines intersects.\n");
