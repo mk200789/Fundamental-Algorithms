@@ -1,6 +1,6 @@
 /* 
-	Compiles with command line  gcc -o test hw1.c -lX11 -lm -L/usr/X11R6/lib 
-	Run : ./test input.txt
+	Compiles with command line  gcc -o assign1 hw1.c -lX11 -lm -L/usr/X11R6/lib 
+	Run : ./assign input.txt
 	Homework #1
 	Wan Kim Mok
 	Due: September 30, 2015
@@ -82,11 +82,8 @@ int main(int argc, char *argv[]){
 	}
 	else{
 		//obtaining line count
-		while(1){
+		while(!feof(fp)){
 			ch = fgetc(fp);
-			if(feof(fp)){
-				break;
-			}
 			if (ch == '\n'){
 				line_count++;
 			}
@@ -281,7 +278,6 @@ int main(int argc, char *argv[]){
 					}
 
 					
-
 					//rewind(fp);
 					count_intersect = 0;
 				}
