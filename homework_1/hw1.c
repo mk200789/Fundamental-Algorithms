@@ -62,6 +62,33 @@ double find_distance(int x1, int y1, int x2, int y2)
 	return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
 }
 
+int check_if_in_triangle(int line_count, int m[][6], int x, int y){
+	int i;
+	for (i = 0; i <= line_count; i++){
+		printf("%d, %d, %d, %d, %d, %d\n", m[i][0], m[i][1], m[i][2], m[i][3], m[i][4], m[i][5]);
+		
+		printf("####### check if starting point in triangle #######\n");
+		PAB = orientation(x, y, m[i][0], m[i][1], m[i][2], m[i][3]);
+		PBC = orientation(x, y, m[i][2], m[i][3], m[i][4], m[i][5]);
+		PAC = orientation(x, y, m[i][0], m[i][1], m[i][4], m[i][5]);
+		CAB = orientation(m[i][4], m[i][5], m[i][0], m[i][1], m[i][2], m[i][3]);
+		ABC = orientation(m[i][0], m[i][1], m[i][2], m[i][3], m[i][4], m[i][5]);
+		BAC = orientation(m[i][2], m[i][3], m[i][0], m[i][1], m[i][4], m[i][5]);
+		
+
+
+		if (PAB*CAB > 0  && PBC*ABC > 0 && PAC*BAC > 0 ){
+			printf("STARTING POINT IS IN THE TRIANGLE.\n");
+			printf("pab * cab = %d\n", PAB*CAB);
+			printf("pbc * abc = %d\n", PBC*ABC);
+			printf("pac * bac = %d\n", PAC*BAC);
+			return 1;
+		}
+
+	}
+	return 0;
+}
+
 int main(int argc, char *argv[]){
 	display = XOpenDisplay(NULL);
 	win_height = 500;
@@ -91,6 +118,7 @@ int main(int argc, char *argv[]){
 		rewind(fp);
 	}
 
+	int m[line_count][6];
 
 	//Creating window
 	win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, win_width, win_height, 10, WhitePixel (display, 0), WhitePixel (display, 0));
@@ -121,25 +149,34 @@ int main(int argc, char *argv[]){
 		XNextEvent(display, &report);
 		switch(report.type){
 			case Expose:
-			{
-				int m[line_count][2];
-
-				for(i=0;i<=line_count;i++){
-					//store formatted input file in array m
-					fscanf(fp, "%d,%d", &m[i][0], &m[i][1]);
-					//printf("%d %d\n", m[i][0], m[i][1]);
-
-					//Magnify points by 2
-					m[i][0] = (m[i][0]*4);
-					m[i][1] = (m[i][1]*4);
-
-					//printf("Scaled coordinates: %d, %d\n", m[i][0], m[i][1]);
+			{	
+				
+				for (i = 0; i <= line_count; i++){
+					fscanf(fp, "%*s ( %d, %d) ( %d, %d) (%d, %d)", &m[i][0], &m[i][1], &m[i][2], &m[i][3], &m[i][4], &m[i][5]);
+					/*
+					m[i][0] = m[i][0]*2;
+					m[i][1] = m[i][1]*2;
+					m[i][2] = m[i][2]*2;
+					m[i][3] = m[i][3]*2;
+					m[i][4] = m[i][4]*2;
+					m[i][5] = m[i][5]*2;
+					*/
+					
 				}
 
-				for(i=0;i<line_count;i++){
-					/* draw lines */
-					XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[i+1][0], m[i+1][1]);
+				for (i = 0; i <= line_count; i++){
+					XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[i][2], m[i][3]);
+					XDrawLine(display, win, green_gc, m[i][2], m[i][3], m[i][4], m[i][5]);
+					XDrawLine(display, win, green_gc, m[i][4], m[i][5], m[i][0], m[i][1]);
+
+				
+					printf("m[i][0]: %d\n", m[i][0]);
+					printf("m[i][1]: %d\n", m[i][1]);
+					printf("m[i][2]: %d\n", m[i][2]);
+					printf("m[i][3]: %d\n", m[i][3]);
+
 				}
+
 				//XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[0][0], m[0][1]);
 				rewind(fp);
 				printf("exposed\n");
@@ -152,10 +189,20 @@ int main(int argc, char *argv[]){
 				double distance1;
 				x = report.xbutton.x;
 				y = report.xbutton.y;
+				int inTriangle;
 
 				if (report.xbutton.button == Button1){
 					/* left click */
-					XFillArc( display, win, black_gc, x, y, win_width/200, win_width/200, 0, 360*64);
+					//XFillArc( display, win, black_gc, x, y, win_width/200, win_width/200, 0, 360*64);
+					
+					inTriangle = check_if_in_triangle(line_count, m, x, y);
+
+					//if point isn't in the triangle draw dot
+					if (inTriangle == 0){
+						XFillArc( display, win, black_gc, x, y, win_width/200, win_width/200, 0, 360*64);
+					}
+					
+
 				}
 				else{
 					printf("Closing Window.\n");
@@ -163,6 +210,8 @@ int main(int argc, char *argv[]){
 					XCloseDisplay(display);
 					exit(1);
 				}
+
+
 
 
 				printf("count: %d\n", count);
@@ -199,28 +248,6 @@ int main(int argc, char *argv[]){
 
 						//printf("%d\n", ABS*ABT);
 						//printf("%d\n", STA*STB);
-
-						//check if starting point in triangle
-						if (i % 3 == 0){
-							printf("####### check if starting point in triangle #######\n");
-							PAB = orientation(start_x, start_y, vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1]);
-							PBC = orientation(start_x, start_y, vertex[i+1][0], vertex[i+1][1], vertex[i+2][0], vertex[i+2][1]);
-							PAC = orientation(start_x, start_y, vertex[i][0], vertex[i][1], vertex[i+2][0], vertex[i+2][1]);
-							CAB = orientation(vertex[i+2][0], vertex[i+2][1], vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1]);
-							ABC = orientation(vertex[i][0], vertex[i][1], vertex[i+1][0], vertex[i+1][1], vertex[i+2][0], vertex[i+2][1]);
-							BAC = orientation(vertex[i+1][0], vertex[i+1][1], vertex[i][0], vertex[i][1], vertex[i+2][0], vertex[i+2][1]);
-
-							printf("pab * cab = %d\n", PAB*CAB);
-							printf("pbc * abc = %d\n", PBC*ABC);
-							printf("pac * bac = %d\n", PAC*BAC);
-
-							if (PAB*CAB > 0  && PBC*ABC > 0 && PAC*BAC > 0 ){
-								printf("STARTING POINT IS IN THE TRIANGLE.\n");
-							}
-							else{
-								printf("STARTING POINT IS NOT IN THE TRIANGLE.\n");
-							}
-						}
 
 						if((ABS*ABT) < 0 && (STA*STB) < 0){
 							printf("Lines intersects.\n");
@@ -284,7 +311,9 @@ int main(int argc, char *argv[]){
 				else{
 					printf("Count equal or more than 2\n");
 				}
-				count++;
+				if (inTriangle == 0){
+					count++;
+				}
 				
 				//Draw(argv);
 				XFlush(display);
