@@ -39,7 +39,7 @@ long ABS, ABT, STA, STB;
 int PAB, PBC, PAC, CAB, BAC, ABC;
 
 //vertices that will be used for dijkstra
-double valid_vertex[200][5];
+double valid_vertex[200][6];
 int k;
 
 char green[] = "#00FF00";
@@ -138,7 +138,7 @@ int expand(int line_count, int vertex[][6], int m, int n, int current_x, int cur
 				//printf("skip\n");
 			}
 			else{
-				printf("check if exist: %d %d\n", vertex[i][j], vertex[i][j+1]);
+				//printf("check if exist: %d %d\n", vertex[i][j], vertex[i][j+1]);
 				
 				if (check_if_in_triangle(line_count, vertex, vertex[i][j], vertex[i][j+1]) == 0){
 					//printf("point not in triangle\n");
@@ -146,12 +146,13 @@ int expand(int line_count, int vertex[][6], int m, int n, int current_x, int cur
 						//printf("does not intersect\n");
 						if( vertex_exist(vertex[i][j], vertex[i][j+1], current_x, current_y) == 0){
 							//printf("vertex dne\n");
-							XDrawLine(display, win, light_purple_gc, current_x, current_y, vertex[i][j], vertex[i][j+1]);
+							//XDrawLine(display, win, light_purple_gc, current_x, current_y, vertex[i][j], vertex[i][j+1]);
 							valid_vertex[k][0] = current_x;
 							valid_vertex[k][1] = current_y;
 							valid_vertex[k][2] = vertex[i][j];
 							valid_vertex[k][3] = vertex[i][j+1];
-							valid_vertex[k++][4] = find_distance(current_x, current_y, vertex[i][j], vertex[i][j+1]);
+							valid_vertex[k][4] = find_distance(current_x, current_y, vertex[i][j], vertex[i][j+1]);
+							valid_vertex[k++][5] = -1;
 						}
 						else{
 							//printf("vertex exists\n");
@@ -185,14 +186,17 @@ int valid_vertices(int line_count, int vertex[][6], int i, int current_x, int cu
 						
 						//printf("%d %d %d %d\n", current_x, current_y, vertex[m][n], vertex[m][n+1] );
 
-						XDrawLine(display, win, red_gc, current_x, current_y, vertex[m][n], vertex[m][n+1]);
+						//XDrawLine(display, win, red_gc, current_x, current_y, vertex[m][n], vertex[m][n+1]);
 						
 						valid_vertex[k][0] = current_x;
 						valid_vertex[k][1] = current_y;
 						valid_vertex[k][2] = vertex[m][n];
 						valid_vertex[k][3] = vertex[m][n+1];
-						valid_vertex[k++][4] = find_distance(current_x, current_y, vertex[m][n], vertex[m][n+1]);
+						valid_vertex[k][4] = find_distance(current_x, current_y, vertex[m][n], vertex[m][n+1]);
+						valid_vertex[k++][5] = -1;
+						
 						int f = m;
+
 						while(vertex[f][n]!= -5 && f<=line_count+1){
 							if (check_if_in_triangle(line_count, vertex, vertex[f][n], vertex[f][n+1]) == 0){
 								expand(line_count, vertex, f, n, vertex[f][n], vertex[f][n+1]);
@@ -229,17 +233,43 @@ int vertex_exist(int x, int y, int current_x, int current_y){
 }
 
 
-int * start_graph(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
+int end_graph(int line_count, int vertex[][6], int target_x, int target_y){
+	
+	int i, j;
+
+	for(i=0; i<=line_count; i++){
+		for(j=0; j<6; j+=2){
+			if(check_if_in_triangle(line_count, vertex, vertex[i][j], vertex[i][j+1])==0){
+				if(check_intersect(line_count, vertex, vertex[i][j], vertex[i][j+1], target_x, target_y) == 0){
+					
+					if (vertex_exist(vertex[i][j], vertex[i][j+1], target_x, target_y) == 0){
+						printf("%d %d %d %d \n", vertex[i][j], vertex[i][j+1], target_x, target_y);
+						valid_vertex[k][0] = vertex[i][j];
+						valid_vertex[k][1] = vertex[i][j+1];
+						valid_vertex[k][2] = target_x;
+						valid_vertex[k][3] = target_y;
+						valid_vertex[k][4] = find_distance(vertex[i][j], vertex[i][j+1], target_x, target_y);
+						valid_vertex[k++][5] = -1;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+int start_graph(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
 
 	int i, j;
 	int is_intersect;
-	int updated_vertex[(line_count*6)+2][2];
 
+	//store the start point in valid_vertex 
 	valid_vertex[k][0] = start_x;
 	valid_vertex[k][1] = start_y;
 	valid_vertex[k][2] = start_x;
 	valid_vertex[k][3] = start_y;
-	valid_vertex[k++][4] = 0.0;
+	valid_vertex[k][4] = 0.0;
+	valid_vertex[k++][5] = -1;
 
 
 	for (i=0; i<=line_count; i++){
@@ -252,22 +282,21 @@ int * start_graph(int line_count, int vertex[][6], int start_x, int start_y, int
 				
 
 				if (is_intersect == 0){
-					XDrawLine(display, win, black_gc, start_x, start_y, vertex[i][j], vertex[i][j+1]);
+					//XDrawLine(display, win, black_gc, start_x, start_y, vertex[i][j], vertex[i][j+1]);
 
 					valid_vertex[k][0] = start_x;
 					valid_vertex[k][1] = start_y;
 					valid_vertex[k][2] = vertex[i][j];
 					valid_vertex[k][3] = vertex[i][j+1];
-					valid_vertex[k++][4] = find_distance(vertex[i][j], vertex[i][j+1], start_x, start_y);
+					valid_vertex[k][4] = find_distance(vertex[i][j], vertex[i][j+1], start_x, start_y);
+					valid_vertex[k++][5] = -1;
 					
 					valid_vertices(line_count, vertex, i, vertex[i][j], vertex[i][j+1], start_x, start_y);
 
 				}
-
 			}
 		}
 	}
-
 }
 
 
@@ -410,9 +439,13 @@ int main(int argc, char *argv[]){
 					rewind(fp);
 
 					start_graph(line_count, vertex, start_x, start_y, target_x, target_y);
+					end_graph(line_count, vertex, target_x, target_y);
 					
 					printf(" total lines %d\n", k);
 					for (i= 0; i<k; i++){
+						if  (valid_vertex[i][0] != 0){
+							XDrawLine(display, win, light_purple_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
+						}
 						printf("from (%d, %d) to (%d, %d) is %f long.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);
 					}
 
