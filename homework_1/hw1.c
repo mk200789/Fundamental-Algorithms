@@ -35,7 +35,7 @@ unsigned int start_x, start_y , target_x, target_y;
 //count keep track of the left clicks
 int count, count_intersect;
 
-int ABS, ABT, STA, STB;
+long ABS, ABT, STA, STB;
 int PAB, PBC, PAC, CAB, BAC, ABC;
 
 char green[] = "#00FF00";
@@ -68,9 +68,7 @@ double find_distance(int x1, int y1, int x2, int y2)
 int check_if_in_triangle(int line_count, int m[][6], int x, int y){
 	int i;
 	for (i = 0; i <= line_count; i++){
-		printf("%d, %d, %d, %d, %d, %d\n", m[i][0], m[i][1], m[i][2], m[i][3], m[i][4], m[i][5]);
-		
-		printf("####### check if point in triangle #######\n");
+		//printf("####### check if point in triangle #######\n");
 		PAB = orientation(x, y, m[i][0], m[i][1], m[i][2], m[i][3]);
 		PBC = orientation(x, y, m[i][2], m[i][3], m[i][4], m[i][5]);
 		PAC = orientation(x, y, m[i][0], m[i][1], m[i][4], m[i][5]);
@@ -79,63 +77,96 @@ int check_if_in_triangle(int line_count, int m[][6], int x, int y){
 		BAC = orientation(m[i][2], m[i][3], m[i][0], m[i][1], m[i][4], m[i][5]);
 		
 		if (PAB*CAB > 0  && PBC*ABC > 0 && PAC*BAC > 0 ){
-			printf("POINT IS IN THE TRIANGLE.\n");
-			printf("pab * cab = %d\n", PAB*CAB);
-			printf("pbc * abc = %d\n", PBC*ABC);
-			printf("pac * bac = %d\n", PAC*BAC);
+			//point is in the triangle
 			return 1;
 		}
 	}
 	return 0;
 }
 
-int * nearest_line_seg(int line_count, int vertex[][6], int x, int y){
 
-	int i;
-	static int result_vertex[3]; //first two will be the value of the vertex, last will contain the distance
+int check_intersect(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
 
-	for (i = 0; i <= line_count; i++){
-		printf("%d\n", result_vertex[2]);
-		if (result_vertex[2] == 0){
-			//deal with the first triangle
-			//printf("first triangle\n");
-			result_vertex[2] = find_distance(x, y, vertex[i][0], vertex[i][1]);
-			result_vertex[0] = vertex[i][0];
-			result_vertex[1] = vertex[i][1];
-		}
-		else{
-			//remaining triangles
-			//printf("remaining triangles\n");
-			if (find_distance(x, y, vertex[i][0], vertex[i][1]) < result_vertex[2]){
-				result_vertex[2] = find_distance(x, y, vertex[i][0], vertex[i][1]);
-				result_vertex[0] = vertex[i][0];
-				result_vertex[1] = vertex[i][1];
+	int i, j;
+	int val = 0;
+
+	printf("======================START======================\n");
+	printf("target: (%d, %d)\n", target_x, target_y);
+
+	for (i=0; i<=line_count; i++){
+
+		for (j=0; j<6; j+=2){
+			//printf("%d\n", j);
+			if (j == 4){
+				//printf("Ax:%d, Ay:%d, Bx:%d, By:%d\n", vertex[i][j], vertex[i][j+1], vertex[i][0], vertex[i][1]);
+				ABS = orientation(vertex[i][j], vertex[i][j+1], vertex[i][0], vertex[i][1], start_x, start_y);
+				ABT = orientation(vertex[i][j], vertex[i][j+1], vertex[i][0], vertex[i][1], target_x, target_y);
+				STA = orientation(start_x, start_y, target_x, target_y, vertex[i][j], vertex[i][j+1]);
+				STB = orientation(start_x, start_y, target_x, target_y, vertex[i][0], vertex[i][1]);
 			}
-		}
-		
-		if (find_distance(x, y, vertex[i][2], vertex[i][3]) < result_vertex[2]){
-			result_vertex[2] = find_distance(x, y, vertex[i][2], vertex[i][3]);
-			result_vertex[0] = vertex[i][2];
-			result_vertex[1] = vertex[i][3];
-		}
-		
-		if (find_distance(x,y, vertex[i][4], vertex[i][5]) < result_vertex[2]){
-			result_vertex[2] = find_distance(x,y, vertex[i][4], vertex[i][5]);
-			result_vertex[0] = vertex[i][4];
-			result_vertex[1] = vertex[i][5];
+			else{
+				//printf("Ax:%d, Ay:%d, Bx:%d, By:%d\n", vertex[i][j], vertex[i][j+1], vertex[i][j+2], vertex[i][j+3]);
+				ABS = orientation(vertex[i][j], vertex[i][j+1], vertex[i][j+2], vertex[i][j+3], start_x, start_y);
+				ABT = orientation(vertex[i][j], vertex[i][j+1], vertex[i][j+2], vertex[i][j+3], target_x, target_y);
+				STA = orientation(start_x, start_y, target_x, target_y, vertex[i][j], vertex[i][j+1]);
+				STB = orientation(start_x, start_y, target_x, target_y, vertex[i][j+2], vertex[i][j+3]);
+			}
+
+			//printf("ABST*ABT: %lu, STA*STB: %lu\n", ABS*ABT, STA*STB);
+			
+			if ((ABS*ABT)<0 && (STA*STB)<0){
+				
+				if (j == 4){
+					printf("destination2: %d, %d, line: (%d,%d) (%d,%d)\n", target_x, target_y, vertex[i][j], vertex[i][j+1], vertex[i][0], vertex[i][1]);
+					printf("ABST*ABT: %lu, STA*STB: %lu\n", ABS*ABT, STA*STB);
+				}
+				else{
+					printf("destination1: %d, %d, line: (%d,%d) (%d,%d)\n", target_x, target_y, vertex[i][j], vertex[i][j+1], vertex[i][j+2], vertex[i][j+3]);
+					printf("ABST*ABT: %lu, STA*STB: %lu\n", ABS*ABT, STA*STB);
+				}
+				
+				val = 1;
+				
+			}
+	
 		}
 	}
-	printf("closes vertex is (%d, %d) with distance of %d\n", result_vertex[0], result_vertex[1], result_vertex[2]);
 
-	//returns the vertices closest along its distance
-	return result_vertex;//, first_distance;
+	return val;
+	
+}
+
+
+int * start_graph(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
+
+	int i, j;
+	int is_intersect;
+
+	for (i=0; i<=line_count; i++){
+
+		for (j=0; j<6; j+=2){
+
+			if (check_if_in_triangle(line_count, vertex, vertex[i][j], vertex[i][j+1]) == 0){
+
+				is_intersect = check_intersect(line_count, vertex, start_x, start_y, vertex[i][j], vertex[i][j+1]);
+				
+
+				if (is_intersect == 0){
+
+					XDrawLine(display, win, black_gc, start_x, start_y, vertex[i][j], vertex[i][j+1]);
+				}
+
+			}
+		}
+	}
+
 }
 
 int main(int argc, char *argv[]){
 	display = XOpenDisplay(NULL);
 	win_height = 500;
 	win_width = 500;
-	count = 0;
+	count = -1;
 	count_intersect = 0;
 
 	FILE *fp;
@@ -219,10 +250,12 @@ int main(int argc, char *argv[]){
 
 				if (report.xbutton.button == Button1){
 					/* left click */
-					
+					count++;
+					if (count > 1){
+						count = 0;
+					}
 					inTriangle = check_if_in_triangle(line_count, m, x, y);
 
-					//if point isn't in the triangle draw dot
 					if (inTriangle == 0){
 						XFillArc( display, win, black_gc, x, y, win_width/200, win_width/200, 0, 360*64);
 					}
@@ -247,12 +280,11 @@ int main(int argc, char *argv[]){
 					target_y = y;
 
 					printf("Count less than 2\n");
-					printf("point x: %d, point y: %d\n", x, y);
+					printf("point x: %d, point y: %d\n", start_x, start_y);
 
 					int vertex[line_count][6];
-					int total_intersection[line_count][2];
-					int *result_vertex;
-					//int distance_of_nearest_vertex;
+					int * nearest_triangles;
+					int * result_line_seg;
 
 					for(i=0;i<=line_count;i++){
 						//store formatted input file in array m
@@ -260,91 +292,13 @@ int main(int argc, char *argv[]){
 					}
 					rewind(fp);
 
+					start_graph(line_count, vertex, start_x, start_y, target_x, target_y);
 
-					//check any intersection with the nearest triangle to it
-					result_vertex = nearest_line_seg(line_count, vertex, start_x, start_y);
-					printf("closes vertex is (%d, %d) with distance of %d\n", result_vertex[0], result_vertex[1], result_vertex[2]);
-					/*
-					for(i = 0; i <= line_count; i++ ){
-						printf("%d, %d, %d, %d, %d, %d\n", vertex[i][0], vertex[i][1], vertex[i][2], vertex[i][3], vertex[i][4], vertex[i][5]);
-						result_vertex = nearest_line_seg(line_count, vertex, start_x, start_y);
-						printf("closes vertex is (%d, %d) with distance of %d\n", result_vertex[0], result_vertex[1], result_vertex[2]);
-						
-						ABS = orientation(vertex[i][2], vertex[i][3], vertex[i][4], vertex[i][5], start_x, start_y);
-						ABT = orientation(vertex[i][2], vertex[i][3], vertex[i][4], vertex[i][5], target_x, target_y);
-						STA = orientation(start_x, start_y, target_x, target_y, vertex[i][2], vertex[i][3]);
-						STB = orientation(start_x, start_y, target_x, target_y, vertex[i][4], vertex[i][5]);
-
-						//printf("%d\n", ABS*ABT);
-						//printf("%d\n", STA*STB);
-						
-
-						if((ABS*ABT) < 0 && (STA*STB) < 0){
-							printf("Lines intersects.\n");
-							count = -1;
-
-							total_intersection[count_intersect][0]= vertex[i][0];
-							total_intersection[count_intersect][1]= vertex[i][1];
-							total_intersection[count_intersect+1][0]= vertex[i+1][0];
-							total_intersection[count_intersect+1][1]= vertex[i+1][1];
-							printf("%d, %d\n", total_intersection[count_intersect][0], total_intersection[count_intersect][1]);
-							printf("%d, %d\n", total_intersection[count_intersect+1][0], total_intersection[count_intersect+1][1]);
-							count_intersect++;
-						}
-						else{
-							printf("Lines does not intersects.\n");
-						}
-						
-					}
-					*/
-					//check intersection with the nearest triangle
-					//ABS = orientation
-
-					//stores the distance of the points it intersects
-					int h[1][2];
-					printf("total intersection: %d\n", count_intersect);
-					double distance2;
-					
-					if (count_intersect > 0){
-
-						for(i = 0; i < count_intersect+1; i++){
-							printf("%d, %d\n", total_intersection[i][0], total_intersection[i][1]);
-							distance1 = find_distance(start_x, start_y, total_intersection[i][0], total_intersection[i][1]);
-							printf("The distance to %d, %d is %f\n", total_intersection[i][0], total_intersection[i][1] ,distance1);
-
-
-							if (i == 0){
-								h[0][0] = total_intersection[i][0];
-								h[0][1] = total_intersection[i][1];
-							}
-							else{
-								distance2 = find_distance(start_x, start_y, h[0][0], h[0][1]);
-								printf("%f\n", distance1);
-								printf("%f\n", distance2);
-								if(distance1 < distance2){
-									h[0][0] = total_intersection[i][0];
-									h[0][1] = total_intersection[i][1];
-								}
-							}
-						}
-
-						printf("%d, %d, %f\n", h[0][0], h[0][1], find_distance(start_x, start_y, h[0][0], h[0][1]));
-						XDrawLine(display, win, black_gc, start_x, start_y, h[0][0], h[0][1]);
-					}
-					else{
-						XDrawLine(display, win, black_gc, start_x, start_y, target_x, target_y);
-						count = -1;
-					}
-
-					
-					//rewind(fp);
-					count_intersect = 0;
+					count = -1;
 				}
-				else{
-					printf("Count equal or more than 2\n");
-				}
-				if (inTriangle == 0){
-					count++;
+
+				if (inTriangle != 0){
+					count = -1;
 				}
 				
 				//Draw(argv);
@@ -357,4 +311,3 @@ int main(int argc, char *argv[]){
 	fclose(fp);
 	return 0;
 }
-
