@@ -243,7 +243,7 @@ void end_graph(int line_count, int vertex[][6], int target_x, int target_y){
 				if(check_intersect(line_count, vertex, vertex[i][j], vertex[i][j+1], target_x, target_y) == 0){
 					
 					if (vertex_exist(vertex[i][j], vertex[i][j+1], target_x, target_y) == 0){
-						printf("%d %d %d %d \n", vertex[i][j], vertex[i][j+1], target_x, target_y);
+						
 						valid_vertex[k][0] = vertex[i][j];
 						valid_vertex[k][1] = vertex[i][j+1];
 						valid_vertex[k][2] = target_x;
@@ -269,7 +269,7 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 	valid_vertex[k][2] = start_x;
 	valid_vertex[k][3] = start_y;
 	valid_vertex[k][4] = 0.0;
-	valid_vertex[k++][5] = -1;
+	valid_vertex[k++][5] = 0.0;
 
 
 	for (i=0; i<=line_count; i++){
@@ -299,8 +299,72 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 	}
 }
 
-void shortest_path(){
+void neighbor_vertices(double x1, double y1, double x2, double y2, double length){
+	int i, j;
+	//printf("line: (%d, %d) to (%d, %d)\n", (int)x1, (int)y1, (int)x2, (int)y2);
+	//printf("neighbor of vertex:\n");
+	int temp[6];// holds which vertex
+	j = 0;
+	float smallest;
+
+	for(i=0; i<k; i++){
+		if(valid_vertex[i][0] == x2 && valid_vertex[i][1] == y2){
+			if (valid_vertex[i][2] == x1  && valid_vertex[i][3] == y1){
+			}
+			else{
+				printf("(%d %d) \n", (int)valid_vertex[i][2], (int)valid_vertex[i][3]);
+				if (valid_vertex[i][5] == 0.0 || valid_vertex[i][5] == 1.0){
+
+				}else if(valid_vertex[i][5] == -1.0){
+					valid_vertex[i][4] = length + valid_vertex[i][4];
+					valid_vertex[i][5] = 0.0; //mark 0 if visited
+					temp[j] = i; 
+					j++;
+					printf("i: %d\n", i);
+				}
+			}
+		}
+	}
+
+	//smallest =valid_vertex[0][4];
+	int p;
+	for (p=0; p<j; p++){
+		printf("%f\n", valid_vertex[temp[p]][4]);
+		//printf("%f\n", valid_vertex[temp[p]][4]);
+		
+		if (p == 0){
+			smallest = valid_vertex[temp[p]][4];
+			valid_vertex[temp[p]][5] = 0.0;
+		}
+		
+		if (valid_vertex[temp[p]][4]< smallest){
+			smallest = valid_vertex[temp[p]][4];
+			valid_vertex[temp[p]][5] = 0;
+		}
+		else{
+			valid_vertex[temp[p]][5] = 1;
+		}
+		
+	}
+
+	printf("smallest: %f\n", smallest);
+
+
 	
+}
+
+void shortest_path(){
+	int i;
+	/*
+	for(i=0; i<k; i++){
+		printf("%f %f %f %f %f\n", valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][4]);
+		neighbor_vertices(valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][4]);
+	}
+	*/
+
+	printf("%f %f %f %f %f\n", valid_vertex[0][0], valid_vertex[0][1], valid_vertex[0][2], valid_vertex[0][3], valid_vertex[0][4]);
+	neighbor_vertices(valid_vertex[0][0], valid_vertex[0][1], valid_vertex[0][2], valid_vertex[0][3], valid_vertex[0][4]);
+
 }
 
 int main(int argc, char *argv[]){
@@ -449,7 +513,14 @@ int main(int argc, char *argv[]){
 						if  (valid_vertex[i][0] != 0){
 							XDrawLine(display, win, light_purple_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
 						}
-						printf("from (%d, %d) to (%d, %d) is %f long.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);
+						//printf("from (%d, %d) to (%d, %d) is %f long.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);
+					}
+
+					shortest_path();
+
+
+					for(i=0; i<k; i++){
+						printf("from (%d, %d) to (%d, %d) is %f long and %f.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5]);
 					}
 
 
