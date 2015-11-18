@@ -22,9 +22,9 @@ int intersect = false;
 
 Display *display;
 Window win;
-GC green_gc, red_gc, black_gc;
+GC green_gc, red_gc, black_gc, light_purple_gc;
 XEvent report;
-XColor green_col, red_col, black_col;
+XColor green_col, red_col, black_col, light_purple_col;
 Colormap colormap;
 
 unsigned int win_width, win_height;
@@ -38,9 +38,14 @@ int count, count_intersect;
 long ABS, ABT, STA, STB;
 int PAB, PBC, PAC, CAB, BAC, ABC;
 
+//vertices that will be used for dijkstra
+double valid_vertex[200][5];
+int k;
+
 char green[] = "#00FF00";
 char red[] = "#A80000";
 char black[] = "#000000";
+char light_purple[] = "#FFCCFF";
 
 
 int orientation(int ax, int ay, int bx, int by, int cx, int cy)
@@ -90,9 +95,6 @@ int check_intersect(int line_count, int vertex[][6], int start_x, int start_y, i
 	int i, j;
 	int val = 0;
 
-	printf("======================START======================\n");
-	printf("target: (%d, %d)\n", target_x, target_y);
-
 	for (i=0; i<=line_count; i++){
 
 		for (j=0; j<6; j+=2){
@@ -116,15 +118,6 @@ int check_intersect(int line_count, int vertex[][6], int start_x, int start_y, i
 			
 			if ((ABS*ABT)<0 && (STA*STB)<0){
 				
-				if (j == 4){
-					printf("destination2: %d, %d, line: (%d,%d) (%d,%d)\n", target_x, target_y, vertex[i][j], vertex[i][j+1], vertex[i][0], vertex[i][1]);
-					printf("ABST*ABT: %lu, STA*STB: %lu\n", ABS*ABT, STA*STB);
-				}
-				else{
-					printf("destination1: %d, %d, line: (%d,%d) (%d,%d)\n", target_x, target_y, vertex[i][j], vertex[i][j+1], vertex[i][j+2], vertex[i][j+3]);
-					printf("ABST*ABT: %lu, STA*STB: %lu\n", ABS*ABT, STA*STB);
-				}
-				
 				val = 1;
 				
 			}
@@ -136,11 +129,118 @@ int check_intersect(int line_count, int vertex[][6], int start_x, int start_y, i
 	
 }
 
+int expand(int line_count, int vertex[][6], int m, int n, int current_x, int current_y){
+	int i, j, l;
+	//printf("#################################EXPAND %d %d current: %d %d #################################\n", m, n, current_x, current_y);
+	for (i=0; i<=line_count; i++){
+		for (j=0; j<6; j+=2){
+			if (i==m && j==n){
+				//printf("skip\n");
+			}
+			else{
+				printf("check if exist: %d %d\n", vertex[i][j], vertex[i][j+1]);
+				
+				if (check_if_in_triangle(line_count, vertex, vertex[i][j], vertex[i][j+1]) == 0){
+					//printf("point not in triangle\n");
+					if (check_intersect(line_count, vertex, current_x, current_y, vertex[i][j], vertex[i][j+1])== 0){
+						//printf("does not intersect\n");
+						if( vertex_exist(vertex[i][j], vertex[i][j+1], current_x, current_y) == 0){
+							//printf("vertex dne\n");
+							XDrawLine(display, win, light_purple_gc, current_x, current_y, vertex[i][j], vertex[i][j+1]);
+							valid_vertex[k][0] = current_x;
+							valid_vertex[k][1] = current_y;
+							valid_vertex[k][2] = vertex[i][j];
+							valid_vertex[k][3] = vertex[i][j+1];
+							valid_vertex[k++][4] = find_distance(current_x, current_y, vertex[i][j], vertex[i][j+1]);
+						}
+						else{
+							//printf("vertex exists\n");
+						}
+					}
+					else{
+						//printf("does intersect\n");
+					}
+				}
+			}
+		}
+	}
+}
+
+int valid_vertices(int line_count, int vertex[][6], int i, int current_x, int current_y, int start_x, int start_y){
+	//get all the valid vertices in a new list
+	
+	int m, n;
+
+	for (m=0; m<=line_count; m++){
+
+		for(n=0; n<6; n+=2){
+					
+			if (check_if_in_triangle(line_count, vertex, vertex[m][n], vertex[m][n+1]) == 0){
+
+				if (check_intersect(line_count, vertex, current_x, current_y, vertex[m][n], vertex[m][n+1]) == 0){
+						
+					//printf("%d %d %d %d\n", current_x, current_y, vertex[m][n], vertex[m][n+1] );
+					
+					if (vertex_exist(vertex[m][n], vertex[m][n+1], current_x, current_y) == 0){
+						
+						//printf("%d %d %d %d\n", current_x, current_y, vertex[m][n], vertex[m][n+1] );
+
+						XDrawLine(display, win, red_gc, current_x, current_y, vertex[m][n], vertex[m][n+1]);
+						
+						valid_vertex[k][0] = current_x;
+						valid_vertex[k][1] = current_y;
+						valid_vertex[k][2] = vertex[m][n];
+						valid_vertex[k][3] = vertex[m][n+1];
+						valid_vertex[k++][4] = find_distance(current_x, current_y, vertex[m][n], vertex[m][n+1]);
+						int f = m;
+						while(vertex[f][n]!= -5 && f<=line_count+1){
+							if (check_if_in_triangle(line_count, vertex, vertex[f][n], vertex[f][n+1]) == 0){
+								expand(line_count, vertex, f, n, vertex[f][n], vertex[f][n+1]);
+							}
+							f++;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+int vertex_exist(int x, int y, int current_x, int current_y){
+	
+	int i;
+	if (current_x == x && current_y == y){
+		return 1;
+	}
+	else{
+		for (i=0; i<k; i++){
+			//if (valid_vertex[i][2] == x && valid_vertex[i][3] == y){
+			if (valid_vertex[i][0] == current_x && valid_vertex[i][1] == current_y && valid_vertex[i][2] == x && valid_vertex[i][3] == y){
+				return 1;
+			}
+			else if (valid_vertex[i][0] == x && valid_vertex[i][1] == y && valid_vertex[i][2] == current_x && valid_vertex[i][3] == current_y){
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 
 int * start_graph(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
 
 	int i, j;
 	int is_intersect;
+	int updated_vertex[(line_count*6)+2][2];
+
+	valid_vertex[k][0] = start_x;
+	valid_vertex[k][1] = start_y;
+	valid_vertex[k][2] = start_x;
+	valid_vertex[k][3] = start_y;
+	valid_vertex[k++][4] = 0.0;
+
 
 	for (i=0; i<=line_count; i++){
 
@@ -152,8 +252,16 @@ int * start_graph(int line_count, int vertex[][6], int start_x, int start_y, int
 				
 
 				if (is_intersect == 0){
-
 					XDrawLine(display, win, black_gc, start_x, start_y, vertex[i][j], vertex[i][j+1]);
+
+					valid_vertex[k][0] = start_x;
+					valid_vertex[k][1] = start_y;
+					valid_vertex[k][2] = vertex[i][j];
+					valid_vertex[k][3] = vertex[i][j+1];
+					valid_vertex[k++][4] = find_distance(vertex[i][j], vertex[i][j+1], start_x, start_y);
+					
+					valid_vertices(line_count, vertex, i, vertex[i][j], vertex[i][j+1], start_x, start_y);
+
 				}
 
 			}
@@ -162,12 +270,14 @@ int * start_graph(int line_count, int vertex[][6], int start_x, int start_y, int
 
 }
 
+
 int main(int argc, char *argv[]){
 	display = XOpenDisplay(NULL);
 	win_height = 500;
 	win_width = 500;
 	count = -1;
 	count_intersect = 0;
+	k = 0;
 
 	FILE *fp;
 	char buff[1000];
@@ -191,7 +301,8 @@ int main(int argc, char *argv[]){
 		rewind(fp);
 	}
 
-	int m[line_count][6];
+	//int m[line_count][6];
+	int m[line_count+1][6];
 
 	//Creating window
 	win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, win_width, win_height, 10, WhitePixel (display, 0), WhitePixel (display, 0));
@@ -203,15 +314,19 @@ int main(int argc, char *argv[]){
 	green_gc = XCreateGC(display, win, 0, 0);
 	red_gc = XCreateGC(display, win, 0, 0);
 	black_gc = XCreateGC(display, win, 0, 0);
+	light_purple_gc = XCreateGC(display, win, 0, 0);
 	XParseColor(display, colormap, green, &green_col);
 	XParseColor(display, colormap, red, &red_col);
 	XParseColor(display, colormap, black, &black_col);
+	XParseColor(display, colormap, light_purple, &light_purple_col);
 	XAllocColor(display, colormap, &green_col);
 	XAllocColor(display, colormap, &red_col);
 	XAllocColor(display, colormap, &black_col);
+	XAllocColor(display, colormap, &light_purple_col);
 	XSetForeground(display, green_gc, green_col.pixel);
 	XSetForeground(display, red_gc, red_col.pixel);
 	XSetForeground(display, black_gc, black_col.pixel);
+	XSetForeground(display, light_purple_gc, light_purple_col.pixel);
 
 	XSelectInput(display, win, ExposureMask | KeyPressMask | ButtonPressMask);
 
@@ -223,12 +338,14 @@ int main(int argc, char *argv[]){
 		switch(report.type){
 			case Expose:
 			{	
+				
 				for (i = 0; i <= line_count; i++){
 					fscanf(fp, "%*s ( %d, %d) ( %d, %d) (%d, %d)", &m[i][0], &m[i][1], &m[i][2], &m[i][3], &m[i][4], &m[i][5]);
 				}
 
-				//for (i = 0; i <= line_count; i++){
-				for (i = 0; i <= line_count; i++){
+				m[line_count+1][0] = -5;
+
+				for (i = 0; i <=line_count; i++){
 					//Draw the triangles
 					XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[i][2], m[i][3]);
 					XDrawLine(display, win, green_gc, m[i][2], m[i][3], m[i][4], m[i][5]);
@@ -293,6 +410,12 @@ int main(int argc, char *argv[]){
 					rewind(fp);
 
 					start_graph(line_count, vertex, start_x, start_y, target_x, target_y);
+					
+					printf(" total lines %d\n", k);
+					for (i= 0; i<k; i++){
+						printf("from (%d, %d) to (%d, %d) is %f long.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);
+					}
+
 
 					count = -1;
 				}
