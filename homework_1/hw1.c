@@ -167,7 +167,7 @@ int expand(int line_count, int vertex[][6], int m, int n, int current_x, int cur
 	}
 }
 
-int valid_vertices(int line_count, int vertex[][6], int i, int current_x, int current_y, int start_x, int start_y){
+void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int current_y, int start_x, int start_y){
 	//get all the valid vertices in a new list
 	
 	int m, n;
@@ -233,7 +233,7 @@ int vertex_exist(int x, int y, int current_x, int current_y){
 }
 
 
-int end_graph(int line_count, int vertex[][6], int target_x, int target_y){
+void end_graph(int line_count, int vertex[][6], int target_x, int target_y){
 	
 	int i, j;
 
@@ -258,7 +258,7 @@ int end_graph(int line_count, int vertex[][6], int target_x, int target_y){
 }
 
 
-int start_graph(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
+void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
 
 	int i, j;
 	int is_intersect;
@@ -299,6 +299,9 @@ int start_graph(int line_count, int vertex[][6], int start_x, int start_y, int t
 	}
 }
 
+void shortest_path(){
+	
+}
 
 int main(int argc, char *argv[]){
 	display = XOpenDisplay(NULL);
