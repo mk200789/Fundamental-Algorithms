@@ -302,9 +302,15 @@ double smallest_length(int total, int length_list[]){
 	int i, j, m;
 
 	smallest = valid_vertex[length_list[0]][4];
+	m = length_list[0];
+	valid_vertex[length_list[0]][5] = 0.0;
 	
+
 	for (i=0; i<total; i++){
-		if (valid_vertex[length_list[i]][4] < smallest){
+
+		if (valid_vertex[length_list[i]][4] <= smallest){
+			valid_vertex[m][5] = 1.0;
+			
 			smallest = valid_vertex[length_list[i]][4];
 			valid_vertex[length_list[i]][5] = 0.0;
 			m = length_list[i];
@@ -318,15 +324,45 @@ double smallest_length(int total, int length_list[]){
 	return m;
 }
 
-void dijkstra(int index_of_smallest){
-
+void check_reverse_seg(int index){
 	int i;
+
+	for(i=0; i<k; i++){
+		if (valid_vertex[i][0] == valid_vertex[index][2] && valid_vertex[i][1] == valid_vertex[index][3] && valid_vertex[i][2] == valid_vertex[index][0] && valid_vertex[i][3] == valid_vertex[index][1]){
+			//if there's a reverse set it it to seen
+			valid_vertex[i][5] = 1.0;
+		}
+	}
+}
+
+
+int dijkstra(int index_of_smallest){
+
+	int i, j,m;
+	int temp[6];
+	j=0;
+
 	for (i=0; i<k; i++){
 		if (valid_vertex[i][0] == valid_vertex[index_of_smallest][2] && valid_vertex[i][1] == valid_vertex[index_of_smallest][3]){
 			//neighboring vertex
 			printf("(%d, %d) (%d, %d)\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3]);
+			
+			if (valid_vertex[i][5] == -1.0 || valid_vertex[i][5] == 1.0){
+				valid_vertex[i][4] = valid_vertex[index_of_smallest][4] + valid_vertex[i][4];
+				temp[j] = i;
+				j++;
+			}
+			else{
+			}
 		}
 	}
+	
+	if (j){
+		m = smallest_length(j, temp);
+		check_reverse_seg(m);
+	}
+
+	return j;
 }
 
 
@@ -342,7 +378,7 @@ void shortest_path(){
 	//	dijkstra(valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][4]);
 	//}
 
-	int i, j, index_of_smallest;
+	int i, j, index_of_smallest, next_index, h;
 	int temp[6];// holds which vertex
 	double smallest;
 	j = 0;
@@ -374,7 +410,9 @@ void shortest_path(){
 
 	printf("index_of_smallest %d\n", index_of_smallest);
 
-	//dijkstra(index_of_smallest);
+	next_index = dijkstra(index_of_smallest);
+
+	printf("%f\n", valid_vertex[next_index][5]);
 
 }
 
@@ -528,8 +566,14 @@ int main(int argc, char *argv[]){
 						//printf("from (%d, %d) to (%d, %d) is %f long.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);
 					}
 
+					for(i=0; i<k; i++){
+						printf("from (%d, %d) to (%d, %d) is %f long and %f.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5]);
+					}
+
+
 					shortest_path();
 
+					printf("apply shortest_path()\n");
 
 					for(i=0; i<k; i++){
 						printf("from (%d, %d) to (%d, %d) is %f long and %f.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5]);
