@@ -53,7 +53,6 @@ int orientation(int ax, int ay, int bx, int by, int cx, int cy)
 	return (ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax);
 }
 
-
 int is_inTrangle(int px, int py, int ax, int ay, int bx, int by, int cx, int cy)
 {
 	int r1, r2, r3, r4, r5, r6;
@@ -63,12 +62,10 @@ int is_inTrangle(int px, int py, int ax, int ay, int bx, int by, int cx, int cy)
 	return  r1, r2, r3;
 }
 
-
 double find_distance(int x1, int y1, int x2, int y2)
 {
 	return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
 }
-
 
 int check_if_in_triangle(int line_count, int m[][6], int x, int y){
 	int i;
@@ -88,7 +85,6 @@ int check_if_in_triangle(int line_count, int m[][6], int x, int y){
 	}
 	return 0;
 }
-
 
 int check_intersect(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
 
@@ -207,7 +203,6 @@ void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int c
 	}
 }
 
-
 int vertex_exist(int x, int y, int current_x, int current_y){
 
 	int i;
@@ -229,7 +224,6 @@ int vertex_exist(int x, int y, int current_x, int current_y){
 
 	return 0;
 }
-
 
 void end_graph(int line_count, int vertex[][6], int target_x, int target_y){
 	
@@ -254,7 +248,6 @@ void end_graph(int line_count, int vertex[][6], int target_x, int target_y){
 		}
 	}
 }
-
 
 void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
 
@@ -297,9 +290,10 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 	}
 }
 
-double smallest_length(int total, int length_list[]){
+int smallest_length(int total, int length_list[]){
 	double smallest;
-	int i, j, m;
+	int i, j, m, goal;
+	goal = 0;
 
 	smallest = valid_vertex[length_list[0]][4];
 	m = length_list[0];
@@ -307,7 +301,14 @@ double smallest_length(int total, int length_list[]){
 	
 
 	for (i=0; i<total; i++){
-
+		if (valid_vertex[length_list[i]][5] == 2){
+			valid_vertex[m][5] = 1.0;
+			smallest = valid_vertex[length_list[i]][4];
+			valid_vertex[length_list[i]][5] = 0.0;
+			m = length_list[i];
+			goal = 1;
+			break;
+		}
 		if (valid_vertex[length_list[i]][4] <= smallest){
 			valid_vertex[m][5] = 1.0;
 			
@@ -320,8 +321,13 @@ double smallest_length(int total, int length_list[]){
 		}
 	}
 
-	printf("smallest: %f %d\n", smallest, m);
-	return m;
+	printf("smallest: %f %d %d\n", smallest, m, goal);
+	if (goal == 1){
+		return -100;
+	}
+	else{
+		return m;
+	}
 }
 
 void check_reverse_seg(int index){
@@ -335,10 +341,9 @@ void check_reverse_seg(int index){
 	}
 }
 
-
 int dijkstra(int index_of_smallest){
 
-	int i, j,m;
+	int i, j,m, goal;
 	int temp[6];
 	j=0;
 
@@ -347,7 +352,10 @@ int dijkstra(int index_of_smallest){
 			//neighboring vertex
 			printf("(%d, %d) (%d, %d)\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3]);
 			
-			if (valid_vertex[i][5] == -1.0 || valid_vertex[i][5] == 1.0){
+			if (valid_vertex[i][5] == -1.0 || valid_vertex[i][5] == 2.0){
+
+				printf("(%d, %d) (%d, %d)\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3]);
+
 				valid_vertex[i][4] = valid_vertex[index_of_smallest][4] + valid_vertex[i][4];
 				temp[j] = i;
 				j++;
@@ -360,27 +368,21 @@ int dijkstra(int index_of_smallest){
 	if (j){
 		m = smallest_length(j, temp);
 		check_reverse_seg(m);
+		return m;
 	}
 
-	return j;
+	//return j;
 }
 
 
 void shortest_path(){
 
-	printf("(%d, %d) (%d, %d) %f\n", (int)valid_vertex[0][0], (int)valid_vertex[0][1], (int)valid_vertex[0][2], (int)valid_vertex[0][3], valid_vertex[0][4]);
-	//neighbor_vertices(valid_vertex[0][0], valid_vertex[0][1], valid_vertex[0][2], valid_vertex[0][3], valid_vertex[0][4]);
-
-	//printf("line: (%d, %d) to (%d, %d)\n", (int)x1, (int)y1, (int)x2, (int)y2);
-	//printf("neighbor of vertex:\n");
-
-	//for (i=0; i<k; i++){
-	//	dijkstra(valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][4]);
-	//}
-
-	int i, j, index_of_smallest, next_index, h;
+	int i, j, index_of_smallest, next_index, h, goal;
 	int temp[6];// holds which vertex
 	double smallest;
+
+	printf("(%d, %d) (%d, %d) %f\n", (int)valid_vertex[0][0], (int)valid_vertex[0][1], (int)valid_vertex[0][2], (int)valid_vertex[0][3], valid_vertex[0][4]);
+
 	j = 0;
 	
 	for(i=0; i<k; i++){
@@ -401,7 +403,6 @@ void shortest_path(){
 					valid_vertex[i][5] = 0.0; //mark 0 if visited
 					temp[j] = i; 
 					j++;
-					printf("i: %d\n", i);
 				}
 			}
 		}
@@ -410,10 +411,17 @@ void shortest_path(){
 
 	printf("index_of_smallest %d\n", index_of_smallest);
 
-	next_index = dijkstra(index_of_smallest);
+	//next_index = dijkstra(index_of_smallest);
+	
+	//printf("next_index %d\n", next_index);
 
-	printf("%f\n", valid_vertex[next_index][5]);
+	//dijkstra(next_index);
 
+	int b;
+	b = dijkstra(index_of_smallest);
+	while(b != -100){
+		b = dijkstra(b);
+	}
 }
 
 
