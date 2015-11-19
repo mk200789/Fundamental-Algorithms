@@ -301,37 +301,18 @@ double smallest_length(int total, int length_list[]){
 	double smallest;
 	int i, j, m;
 
-	for(i=0; i< total; i++){
-		for (j=0; j < total; j++){
-			//printf("%f %f\n", valid_vertex[length_list[i]][4], valid_vertex[length_list[j]][4]);
-
-			if (i == 0 && j == 0){
-				//printf("begin set small to first\n");
-				smallest = valid_vertex[length_list[i]][4];
-				valid_vertex[length_list[i]][5] = 0;
-			}
-
-			if (valid_vertex[length_list[i]][4] <= valid_vertex[length_list[j]][4]){
-				//printf("%f < %f smallest: %f\n", valid_vertex[length_list[i]][4], valid_vertex[length_list[j]][4], smallest);
-				if (valid_vertex[length_list[i]][4] <= smallest){
-					smallest = valid_vertex[length_list[i]][4];
-					valid_vertex[length_list[i]][5] = 0.0;
-					//printf("set small %f\n", valid_vertex[length_list[i]][5]);
-					m = length_list[i];
-				}
-				else{
-					//printf("unset\n");
-					valid_vertex[length_list[i]][5] = 1;
-				}
-			}
-			else{
-				//printf("%f > %f\n", valid_vertex[length_list[i]][4], valid_vertex[length_list[j]][4]);
-				valid_vertex[length_list[i]][5] = 1;
-			}
-			
+	smallest = valid_vertex[length_list[0]][4];
+	
+	for (i=0; i<total; i++){
+		if (valid_vertex[length_list[i]][4] < smallest){
+			smallest = valid_vertex[length_list[i]][4];
+			valid_vertex[length_list[i]][5] = 0.0;
+			m = length_list[i];
+		}
+		else{
+			valid_vertex[length_list[i]][5] = 1.0;
 		}
 	}
-
 
 	printf("smallest: %f %d\n", smallest, m);
 	return m;
