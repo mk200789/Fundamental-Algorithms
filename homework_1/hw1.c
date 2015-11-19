@@ -130,8 +130,9 @@ int check_intersect(int line_count, int vertex[][6], int start_x, int start_y, i
 }
 
 int expand(int line_count, int vertex[][6], int m, int n, int current_x, int current_y){
+	
 	int i, j, l;
-	//printf("#################################EXPAND %d %d current: %d %d #################################\n", m, n, current_x, current_y);
+	
 	for (i=0; i<=line_count; i++){
 		for (j=0; j<6; j+=2){
 			if (i==m && j==n){
@@ -180,11 +181,7 @@ void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int c
 
 				if (check_intersect(line_count, vertex, current_x, current_y, vertex[m][n], vertex[m][n+1]) == 0){
 						
-					//printf("%d %d %d %d\n", current_x, current_y, vertex[m][n], vertex[m][n+1] );
-					
 					if (vertex_exist(vertex[m][n], vertex[m][n+1], current_x, current_y) == 0){
-						
-						//printf("%d %d %d %d\n", current_x, current_y, vertex[m][n], vertex[m][n+1] );
 
 						//XDrawLine(display, win, red_gc, current_x, current_y, vertex[m][n], vertex[m][n+1]);
 						
@@ -201,7 +198,7 @@ void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int c
 							if (check_if_in_triangle(line_count, vertex, vertex[f][n], vertex[f][n+1]) == 0){
 								expand(line_count, vertex, f, n, vertex[f][n], vertex[f][n+1]);
 							}
-							f++;
+							f++; 
 						}
 					}
 				}
@@ -212,18 +209,19 @@ void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int c
 
 
 int vertex_exist(int x, int y, int current_x, int current_y){
-	
+
 	int i;
 	if (current_x == x && current_y == y){
 		return 1;
 	}
 	else{
 		for (i=0; i<k; i++){
-			//if (valid_vertex[i][2] == x && valid_vertex[i][3] == y){
-			if (valid_vertex[i][0] == current_x && valid_vertex[i][1] == current_y && valid_vertex[i][2] == x && valid_vertex[i][3] == y){
+			if (valid_vertex[i][0] == x && valid_vertex[i][1] == y && valid_vertex[i][2] == x && valid_vertex[i][3] == y){
+				//includes distance from and to itself
 				return 1;
 			}
-			else if (valid_vertex[i][0] == x && valid_vertex[i][1] == y && valid_vertex[i][2] == current_x && valid_vertex[i][3] == current_y){
+			else if(valid_vertex[i][0] == current_x && valid_vertex[i][1] == current_y && valid_vertex[i][2] == x && valid_vertex[i][3] == y){
+				// there's an exact vertex with same from and to information/direction
 				return 1;
 			}
 		}
@@ -241,15 +239,15 @@ void end_graph(int line_count, int vertex[][6], int target_x, int target_y){
 		for(j=0; j<6; j+=2){
 			if(check_if_in_triangle(line_count, vertex, vertex[i][j], vertex[i][j+1])==0){
 				if(check_intersect(line_count, vertex, vertex[i][j], vertex[i][j+1], target_x, target_y) == 0){
-					
+					//printf("%d %d %d %d\n", vertex[i][j], vertex[i][j+1],target_x, target_y);
 					if (vertex_exist(vertex[i][j], vertex[i][j+1], target_x, target_y) == 0){
-						
+						//printf("%d %d %d %d\n", vertex[i][j], vertex[i][j+1],target_x, target_y);
 						valid_vertex[k][0] = vertex[i][j];
 						valid_vertex[k][1] = vertex[i][j+1];
 						valid_vertex[k][2] = target_x;
 						valid_vertex[k][3] = target_y;
 						valid_vertex[k][4] = find_distance(vertex[i][j], vertex[i][j+1], target_x, target_y);
-						valid_vertex[k++][5] = -1;
+						valid_vertex[k++][5] = 2;
 					}
 				}
 			}
@@ -299,24 +297,90 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 	}
 }
 
-void neighbor_vertices(double x1, double y1, double x2, double y2, double length){
-	int i, j;
+double smallest_length(int total, int length_list[]){
+	double smallest;
+	int i, j, m;
+
+	for(i=0; i< total; i++){
+		for (j=0; j < total; j++){
+			//printf("%f %f\n", valid_vertex[length_list[i]][4], valid_vertex[length_list[j]][4]);
+
+			if (i == 0 && j == 0){
+				//printf("begin set small to first\n");
+				smallest = valid_vertex[length_list[i]][4];
+				valid_vertex[length_list[i]][5] = 0;
+			}
+
+			if (valid_vertex[length_list[i]][4] <= valid_vertex[length_list[j]][4]){
+				//printf("%f < %f smallest: %f\n", valid_vertex[length_list[i]][4], valid_vertex[length_list[j]][4], smallest);
+				if (valid_vertex[length_list[i]][4] <= smallest){
+					smallest = valid_vertex[length_list[i]][4];
+					valid_vertex[length_list[i]][5] = 0.0;
+					//printf("set small %f\n", valid_vertex[length_list[i]][5]);
+					m = length_list[i];
+				}
+				else{
+					//printf("unset\n");
+					valid_vertex[length_list[i]][5] = 1;
+				}
+			}
+			else{
+				//printf("%f > %f\n", valid_vertex[length_list[i]][4], valid_vertex[length_list[j]][4]);
+				valid_vertex[length_list[i]][5] = 1;
+			}
+			
+		}
+	}
+
+
+	printf("smallest: %f %d\n", smallest, m);
+	return m;
+}
+
+void dijkstra(int index_of_smallest){
+
+	int i;
+	for (i=0; i<k; i++){
+		if (valid_vertex[i][0] == valid_vertex[index_of_smallest][2] && valid_vertex[i][1] == valid_vertex[index_of_smallest][3]){
+			//neighboring vertex
+			printf("(%d, %d) (%d, %d)\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3]);
+		}
+	}
+}
+
+
+void shortest_path(){
+
+	printf("(%d, %d) (%d, %d) %f\n", (int)valid_vertex[0][0], (int)valid_vertex[0][1], (int)valid_vertex[0][2], (int)valid_vertex[0][3], valid_vertex[0][4]);
+	//neighbor_vertices(valid_vertex[0][0], valid_vertex[0][1], valid_vertex[0][2], valid_vertex[0][3], valid_vertex[0][4]);
+
 	//printf("line: (%d, %d) to (%d, %d)\n", (int)x1, (int)y1, (int)x2, (int)y2);
 	//printf("neighbor of vertex:\n");
-	int temp[6];// holds which vertex
-	j = 0;
-	float smallest;
 
+	//for (i=0; i<k; i++){
+	//	dijkstra(valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][4]);
+	//}
+
+	int i, j, index_of_smallest;
+	int temp[6];// holds which vertex
+	double smallest;
+	j = 0;
+	
 	for(i=0; i<k; i++){
-		if(valid_vertex[i][0] == x2 && valid_vertex[i][1] == y2){
-			if (valid_vertex[i][2] == x1  && valid_vertex[i][3] == y1){
+		if(valid_vertex[i][0] == valid_vertex[0][2] && valid_vertex[i][1] == valid_vertex[0][3]){
+			if (valid_vertex[i][2] == valid_vertex[0][0]  && valid_vertex[i][3] == valid_vertex[0][1]){
 			}
 			else{
 				printf("(%d %d) \n", (int)valid_vertex[i][2], (int)valid_vertex[i][3]);
+				// 0.0 marked visited
+				// 1.0 visited but large
+				// -1.0 not visited yet
+				// 2.0 target
 				if (valid_vertex[i][5] == 0.0 || valid_vertex[i][5] == 1.0){
 
 				}else if(valid_vertex[i][5] == -1.0){
-					valid_vertex[i][4] = length + valid_vertex[i][4];
+					//the vertex not visited yet so check the distance
+					valid_vertex[i][4] = valid_vertex[0][4] + valid_vertex[i][4];
 					valid_vertex[i][5] = 0.0; //mark 0 if visited
 					temp[j] = i; 
 					j++;
@@ -325,47 +389,14 @@ void neighbor_vertices(double x1, double y1, double x2, double y2, double length
 			}
 		}
 	}
+	index_of_smallest = smallest_length(j, temp);
 
-	//smallest =valid_vertex[0][4];
-	int p;
-	for (p=0; p<j; p++){
-		printf("%f\n", valid_vertex[temp[p]][4]);
-		//printf("%f\n", valid_vertex[temp[p]][4]);
-		
-		if (p == 0){
-			smallest = valid_vertex[temp[p]][4];
-			valid_vertex[temp[p]][5] = 0.0;
-		}
-		
-		if (valid_vertex[temp[p]][4]< smallest){
-			smallest = valid_vertex[temp[p]][4];
-			valid_vertex[temp[p]][5] = 0;
-		}
-		else{
-			valid_vertex[temp[p]][5] = 1;
-		}
-		
-	}
+	printf("index_of_smallest %d\n", index_of_smallest);
 
-	printf("smallest: %f\n", smallest);
-
-
-	
-}
-
-void shortest_path(){
-	int i;
-	/*
-	for(i=0; i<k; i++){
-		printf("%f %f %f %f %f\n", valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][4]);
-		neighbor_vertices(valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][4]);
-	}
-	*/
-
-	printf("%f %f %f %f %f\n", valid_vertex[0][0], valid_vertex[0][1], valid_vertex[0][2], valid_vertex[0][3], valid_vertex[0][4]);
-	neighbor_vertices(valid_vertex[0][0], valid_vertex[0][1], valid_vertex[0][2], valid_vertex[0][3], valid_vertex[0][4]);
+	//dijkstra(index_of_smallest);
 
 }
+
 
 int main(int argc, char *argv[]){
 	display = XOpenDisplay(NULL);
