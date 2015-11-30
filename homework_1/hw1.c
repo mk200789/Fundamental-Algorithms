@@ -151,6 +151,16 @@ int expand(int line_count, int vertex[][6], int m, int n, int current_x, int cur
 							valid_vertex[k][4] = find_distance(current_x, current_y, vertex[i][j], vertex[i][j+1]);
 							valid_vertex[k][5] = -1.0;
 							valid_vertex[k++][6] = -1.0;
+
+							if (vertex_exist(current_x, current_y, vertex[i][j], vertex[i][j+1]) == 0){
+								valid_vertex[k][0] = vertex[i][j];
+								valid_vertex[k][1] = vertex[i][j+1];
+								valid_vertex[k][2] = current_x;
+								valid_vertex[k][3] = current_y;
+								valid_vertex[k][4] = find_distance(current_x, current_y, vertex[i][j], vertex[i][j+1]);
+								valid_vertex[k][5] = -1.0;
+								valid_vertex[k++][6] = -1.0;
+							}
 						}
 						else{
 							//printf("vertex exists\n");
@@ -189,7 +199,18 @@ void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int c
 						valid_vertex[k][4] = find_distance(current_x, current_y, vertex[m][n], vertex[m][n+1]);
 						valid_vertex[k][5] = -1.0;
 						valid_vertex[k++][6] = -1.0;
-						
+
+
+						if (vertex_exist(current_x, current_y, vertex[m][n], vertex[m][n+1]) == 0){
+							valid_vertex[k][0] = vertex[m][n];
+							valid_vertex[k][1] = vertex[m][n+1];
+							valid_vertex[k][2] = current_x;
+							valid_vertex[k][3] = current_y;
+							valid_vertex[k][4] = find_distance(current_x, current_y, vertex[m][n], vertex[m][n+1]);
+							valid_vertex[k][5] = -1.0;
+							valid_vertex[k++][6] = -1.0;
+						}
+
 						int f = m;
 
 						while(vertex[f][n]!= -5 && f<=line_count+1){
@@ -262,9 +283,9 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 	valid_vertex[k][1] = start_y;   // from y value
 	valid_vertex[k][2] = start_x;	// to x value
 	valid_vertex[k][3] = start_y;	// to y value
-	valid_vertex[k][4] = 0.0;		// weight distance
-	valid_vertex[k][5] = -1.0;		
-	valid_vertex[k++][6] = 0.0;		// 2.0 target or 0.0 not at target point 
+	valid_vertex[k][4] = 0.0;		// distance from point a to b
+	valid_vertex[k][5] = -1.0;		// total distance
+	valid_vertex[k++][6] = 0.0;		// -2.0 target , 1.0 has visited not included, 0.0 using, -1.0 not yet visited
 
 
 	for (i=0; i<=line_count; i++){
@@ -294,13 +315,22 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 	}
 }
 
+
 int smallest_length(int total, int length_list[]){
+
+	printf("========================= SMALLEST_LENGTH() =========================\n");
+	
 	double smallest;
 	int i, j, m, goal;
+	printf("j23: %d\n", length_list[0]);
 
-	smallest = valid_vertex[length_list[0]][5];
+	if (valid_vertex[length_list[0]][6] == -2.0){
+	}
+	else{
+		smallest = valid_vertex[length_list[0]][5];
+		valid_vertex[length_list[0]][6] = 0.0;
+	}
 	m = length_list[0];
-	valid_vertex[length_list[0]][6] = 0.0;
 	goal = 0;
 
 	for (i=0; i<total; i++){
@@ -308,29 +338,32 @@ int smallest_length(int total, int length_list[]){
 		//printf("weight: %f ____ %f __%f\n", valid_vertex[length_list[i]][4], valid_vertex[length_list[i]][5], valid_vertex[length_list[i]][6]);
 
 		j = length_list[i];
-
+		printf("good: (%d %d) to (%d %d) distance: %f   weight: %f  endcode: %f\n", (int)valid_vertex[j][0], (int)valid_vertex[j][1], (int)valid_vertex[j][2], (int)valid_vertex[j][3], valid_vertex[j][4], valid_vertex[j][5], valid_vertex[j][6]);
+		
 		if (valid_vertex[j][6] == -2.0){
 			valid_vertex[m][6] = -1.0;
 			smallest = valid_vertex[j][5];
-			valid_vertex[j][6] = 0.0;
+			//valid_vertex[j][6] = 0.0;
+			valid_vertex[j][6] = -4.0;
+			//printf("%f\n", valid_vertex[j][6]);
 			m = j;
 			//printf("GOAL!");
 			goal = 1;
 			break;
 		}
-
-		if (valid_vertex[j][5] <= smallest){
-			valid_vertex[m][6] = -1.0;
-			valid_vertex[j][6] = 0.0;
-			smallest = valid_vertex[j][5];
-			m = j;
+		if (valid_vertex[j][6] == -1.0){
+			if (valid_vertex[j][5] <= smallest){
+				valid_vertex[m][6] = -1.0;
+				valid_vertex[j][6] = 0.0;
+				smallest = valid_vertex[j][5];
+				m = j;
+			}
 		}
-
 	}
 
 	printf("smallest: %f %d %d last %f\n", smallest, m, goal, valid_vertex[m][6]);
 	if (goal == 1){
-		printf("BINGO!\n");
+		//printf("BINGO!\n");
 		return -100;
 	}
 	else{
@@ -339,19 +372,93 @@ int smallest_length(int total, int length_list[]){
 }
 
 void check_reverse_seg(int index){
-	int i;
+	printf("========================= CHECK_REVERSE_SEG() =========================\n");
+	int i, p;
 	for(i=0; i<k; i++){
-		//printf("%d == %d && %d == %d\n", (int)valid_vertex[i][0], (int)valid_vertex[index][2], (int)valid_vertex[i][1], (int)valid_vertex[index][3], (int)valid_vertex[i][2], (int)valid_vertex[index][0], (int)valid_vertex[i][3], (int)valid_vertex[index][1]);
+		
 		if (valid_vertex[i][0] == valid_vertex[index][2] && valid_vertex[i][1] == valid_vertex[index][3] && valid_vertex[i][2] == valid_vertex[index][0] && valid_vertex[i][3] == valid_vertex[index][1]){
 			//if there's a reverse set it it to seen
 			printf("reverse\n");
 			valid_vertex[i][6] = 1.0;
 		}
+
+		if (valid_vertex[i][0] == valid_vertex[index][0] && valid_vertex[i][1] == valid_vertex[index][1]){
+			//if (valid_vertex[i][6] != 0.0 && valid_vertex[i][6] != -2.0){
+				//printf("1. anything besides those who initially come first to this location: (%d, %d) to (%d, %d)\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3]);
+				//valid_vertex[i][6] = 1.0;
+
+				for (p=0; p<k; p++){
+					if (valid_vertex[p][0] == valid_vertex[i][2] && valid_vertex[p][1] == valid_vertex[i][3] && valid_vertex[p][2] == valid_vertex[i][0] && valid_vertex[p][3] == valid_vertex[i][1]){
+						if (valid_vertex[p][6] != 0.0 && valid_vertex[p][6] != -2.0 && valid_vertex[i][6] != 0.0 && valid_vertex[i][6] != -2.0){
+							printf("2. anything besides those who initially come first to this location: (%d, %d) to (%d, %d) %f\n", (int)valid_vertex[p][0], (int)valid_vertex[p][1], (int)valid_vertex[p][2], (int)valid_vertex[p][3], valid_vertex[p][6]);
+							valid_vertex[p][6] = 1.0;
+						}
+					}
+				}
+			//}
+		}
 	}
+}
+
+int check_alt_path_to_point(int index, int index_of_smallest){
+
+	printf("========================= CHECK_ALT_PATH_TO_POINT() =========================\n");
+
+	int i, temp_k, j, m;
+	int temp[6];
+	
+	temp_k = k;
+	j = 0;
+
+	for(i=0; i<temp_k; i++){
+		
+		printf("%d %d\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1]);
+		if (valid_vertex[i][0] == valid_vertex[index][0] && valid_vertex[i][1] == valid_vertex[index][1]){
+			
+			printf("(%d %d) to (%d %d) %f\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][6]);
+			if (valid_vertex[i][6] != 0.0 && valid_vertex[i][6] != 1.0){
+
+				//vertex_exist(int x, int y, int current_x, int current_y)
+				printf("exist?: %d\n" ,vertex_exist(valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][0], valid_vertex[i][1]));
+				
+				//if (vertex_exist(valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]) == 0){
+				if (vertex_exist(valid_vertex[i][2], valid_vertex[i][3], valid_vertex[i][0], valid_vertex[i][1]) == 1){
+					//printf("(%d %d) to (%d %d) %f\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][6]);
+					//temp[j] = k;
+					valid_vertex[k][0] = valid_vertex[i][0];
+					valid_vertex[k][1] = valid_vertex[i][1];
+					valid_vertex[k][2] = valid_vertex[i][2];
+					valid_vertex[k][3] = valid_vertex[i][3];
+					valid_vertex[k][4] = valid_vertex[i][4];
+					valid_vertex[k][5] = valid_vertex[i][4] + valid_vertex[index_of_smallest][4];
+					valid_vertex[k][6] = 1.0;
+					
+					printf("%f vs %f\n", valid_vertex[i][4]+valid_vertex[index_of_smallest][4], valid_vertex[k][5]);
+					temp[j] = k;
+					printf("temp[]: %d and j: %d\n", temp[j], j);
+					j++;
+					k++;
+				}
+			}
+		}
+	}
+
+	//after finding alternative set the vertex to visited
+	valid_vertex[index][6] = 1.0;
+	
+	if (j){
+		m = smallest_length(j, temp);
+		return m;
+	}else{
+		printf("FIGURE OUT %d\n", j);
+		return -100;
+	}
+	
 }
 
 int dijkstra(int index_of_smallest){
 
+	printf("========================= DIJKSTRA() =========================\n");
 	int i, j,m, goal;
 	int temp[6];
 	j=0;
@@ -360,25 +467,20 @@ int dijkstra(int index_of_smallest){
 	for (i=0; i<k; i++){
 		if (valid_vertex[i][0] == valid_vertex[index_of_smallest][2] && valid_vertex[i][1] == valid_vertex[index_of_smallest][3]){
 			//neighboring vertex
-			//printf("%f + %f  <  %f\n", valid_vertex[index_of_smallest][4] , valid_vertex[i][4], valid_vertex[i][5] );
-			if (valid_vertex[i][6] != 1.0){
-				if(valid_vertex[index_of_smallest][4] + valid_vertex[i][4] > -1.0  || valid_vertex[index_of_smallest][4] + valid_vertex[i][4] < valid_vertex[i][5]){
-					//printf("LESSLESS\n");
-					if (valid_vertex[i][6] == -1.0){
-						valid_vertex[i][5] = valid_vertex[index_of_smallest][4] + valid_vertex[i][4];
-					}
-				}
+			if (valid_vertex[i][6] != 1.0 && valid_vertex[i][6] != 0.0 ){
 				
+				valid_vertex[i][5] = valid_vertex[index_of_smallest][4] + valid_vertex[i][4];
+
 				temp[j] = i;
 				j++;
-				//printf("dijkstra from (%d, %d) to (%d, %d) weight %f total: %d\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][5], j);
 			}
 		}
 	}
-	
+
 	if (j){
 		//there is a list of neighbors
 		m = smallest_length(j, temp);
+		printf("There are neighbors: %d\n", m);
 		if (m != -100){
 			check_reverse_seg(m);
 		}
@@ -386,12 +488,13 @@ int dijkstra(int index_of_smallest){
 	}
 	else{
 		// no neighbors
-		return -100;
+		printf("There is no neighbor: @ %d, %f\n", m, valid_vertex[m][6]);
+		m = check_alt_path_to_point(m, index_of_smallest);
+		//set to visit which is the value of 1.0 and deadend
+		printf("G: %d\n", m);
+		return m;
+		//return -100;
 	}
-
-
-
-	//return j;
 }
 
 
@@ -400,9 +503,6 @@ void shortest_path(){
 	int i, j, index_of_smallest, next_index, h1, h2, goal;
 	int temp[6];// holds which vertex
 	double smallest;
-
-	//printf("(%d, %d) (%d, %d) %f\n", (int)valid_vertex[0][0], (int)valid_vertex[0][1], (int)valid_vertex[0][2], (int)valid_vertex[0][3], valid_vertex[0][4]);
-
 	j = 0;
 	
 	//initial neighbor vertices
@@ -423,23 +523,25 @@ void shortest_path(){
 	}
 
 	index_of_smallest = smallest_length(j, temp);
+	printf("BEGIN: SMALLEST %d\n", index_of_smallest);
 
 	int b;
-	b = dijkstra(index_of_smallest);
+	b = index_of_smallest;
+
 	while(1){
+		b = dijkstra(b);
 		if (b == -100){
 			break;
 		}
-		b = dijkstra(b);
-
+		
 	}
 }
 
 
 int main(int argc, char *argv[]){
 	display = XOpenDisplay(NULL);
-	win_height = 500;
-	win_width = 500;
+	win_height = 700;
+	win_width = 700;
 	count = -1;
 	count_intersect = 0;
 	k = 0;
@@ -509,6 +611,19 @@ int main(int argc, char *argv[]){
 				}
 
 				m[line_count+1][0] = -5;
+
+				printf("line_count: %d\n", line_count);
+
+				
+				int j;
+				/*
+				for (i = 0; i <= line_count ; i++){
+					for (j=0; j<6; j+=2){
+						m[i][j] = m[i][j] + 100;
+						m[i][j+1] = m[i][j+1] + 100;
+					}
+				}
+				*/
 
 				for (i = 0; i <=line_count; i++){
 					//Draw the triangles
@@ -580,10 +695,28 @@ int main(int argc, char *argv[]){
 							fscanf(fp, "%*s ( %d, %d) ( %d, %d) (%d, %d)", &vertex[i][0], &vertex[i][1], &vertex[i][2], &vertex[i][3], &vertex[i][4], &vertex[i][5]);					
 						}
 						rewind(fp);
+						
+						int j;
+						/*
+						for (i = 0; i <= line_count ; i++){
+							for (j=0; j<6; j+=2){
+								vertex[i][j] = vertex[i][j] + 100;
+								vertex[i][j+1] = vertex[i][j+1] + 100;
+							}
+						}
+						*/
 
 						start_graph(line_count, vertex, start_x, start_y, target_x, target_y);
 
 						end_graph(line_count, vertex, target_x, target_y);
+						
+						/*
+						for (i= 0; i<k; i++){
+							printf("From (%d, %d) to (%d, %d) with distance of %f.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);
+							XDrawLine(display, win, light_purple_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
+						}
+						*/
+						
 						
 						printf(" total lines %d\n", k);
 						
@@ -592,17 +725,16 @@ int main(int argc, char *argv[]){
 							if  (valid_vertex[i][0] != 0){
 								XDrawLine(display, win, light_purple_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
 							}
-							//printf("from (%d, %d) to (%d, %d) is %f long.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);
 						}
 						*/
-						
 
+						
 						for(i=0; i<k; i++){
 							//printf("from (%d, %d) to (%d, %d) is %f long and %f.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5]);
 							printf("from (%d, %d) to (%d, %d) is %f long and weight: %f and has visited value: %d.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5], (int)valid_vertex[i][6]);
 						}
 
-
+						
 						shortest_path();
 
 						printf("apply shortest_path()\n");
@@ -612,17 +744,21 @@ int main(int argc, char *argv[]){
 							printf("from (%d, %d) to (%d, %d) is %f long and weight: %f and has visited value: %d.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5], (int)valid_vertex[i][6]);
 						}
 						
-
 						
 						printf("The shortest path: \n");
 						for (i= 0; i<k; i++){
-							if  (valid_vertex[i][6] == 0.0){
-								printf("from (%d, %d) to (%d, %d) is %f long.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);		
+							if  (valid_vertex[i][6] == 0.0 || valid_vertex[i][6] == -4.0){
+								printf("from (%d, %d) to (%d, %d) is %f long and last %f.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][6]);		
 								XDrawLine(display, win, light_purple_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
 							}
 						}
-
+						
+						
+						printf(" total lines2 %d\n", k);
+						
+						
 						printf("DONE\n");
+						
 
 
 						count = -1;
