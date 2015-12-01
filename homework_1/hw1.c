@@ -381,8 +381,7 @@ int check_alt_path_to_point(int index, int index_of_smallest){
 					valid_vertex[k][5] = valid_vertex[i][4] + valid_vertex[index_of_smallest][4];
 					valid_vertex[k][6] = 1.0;
 					
-					temp[j] = k;
-					j++;
+					temp[j++] = k;
 					k++;
 				}
 			}
@@ -644,8 +643,6 @@ int main(int argc, char *argv[]){
 						target_x = x;
 						target_y = y;
 
-						//printf("Count less than 2\n");
-						//printf("point x: %d, point y: %d\n", start_x, start_y);
 						printf("\n\nStarting point: (%d, %d)\nTarget point: (%d, %d)\n", start_x, start_y, target_x, target_y);
 
 						int vertex[line_count][6];
@@ -695,12 +692,6 @@ int main(int argc, char *argv[]){
 						shortest_path();
 
 						printf("Applied shortest_path()\n");
-
-						/*
-						for(i=0; i<k; i++){
-							printf("from (%d, %d) to (%d, %d) is %f long and weight: %f and has visited value: %d.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5], (int)valid_vertex[i][6]);
-						}
-						*/
 
 						organize();
 
