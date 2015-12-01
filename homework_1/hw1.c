@@ -176,7 +176,7 @@ int expand(int line_count, int vertex[][6], int m, int n, int current_x, int cur
 	}
 }
 
-void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int current_y, int start_x, int start_y){
+void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int current_y){
 	//get all the valid vertices in a new list
 	
 	printf("========================= VALID_VERTICES() =========================\n");
@@ -282,7 +282,7 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 					valid_vertex[k][5] = -1.0;
 					valid_vertex[k++][6] = -1.0;
 					
-					valid_vertices(line_count, vertex, i, vertex[i][j], vertex[i][j+1], start_x, start_y);
+					valid_vertices(line_count, vertex, i, vertex[i][j], vertex[i][j+1]);
 
 				}
 			}
