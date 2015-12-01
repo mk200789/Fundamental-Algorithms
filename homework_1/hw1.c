@@ -132,7 +132,7 @@ int expand(int line_count, int vertex[][6], int m, int n, int current_x, int cur
 	for (i=0; i<=line_count; i++){
 		for (j=0; j<6; j+=2){
 			if (i==m && j==n){
-				//printf("skip\n");
+				printf("skip to (%d, %d)\n", vertex[i][j], vertex[i][j+1]);
 			}
 			else{
 				//printf("check if exist: %d %d\n", vertex[i][j], vertex[i][j+1]);
@@ -143,6 +143,7 @@ int expand(int line_count, int vertex[][6], int m, int n, int current_x, int cur
 						//printf("does not intersect\n");
 						if( vertex_exist(vertex[i][j], vertex[i][j+1], current_x, current_y) == 0){
 							//printf("vertex dne\n");
+							printf("dne : (%d, %d) to (%d, %d)\n", current_x, current_y, vertex[i][j], vertex[i][j+1]);
 							//XDrawLine(display, win, light_purple_gc, current_x, current_y, vertex[i][j], vertex[i][j+1]);
 							valid_vertex[k][0] = current_x;
 							valid_vertex[k][1] = current_y;
@@ -178,49 +179,24 @@ int expand(int line_count, int vertex[][6], int m, int n, int current_x, int cur
 void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int current_y, int start_x, int start_y){
 	//get all the valid vertices in a new list
 	
+	printf("========================= VALID_VERTICES() =========================\n");
+
 	int m, n;
 
 	for (m=0; m<=line_count; m++){
 
 		for(n=0; n<6; n+=2){
+
+			int f = m;
+			printf("F: %d\n", f);
+
+			while(vertex[f][n]!= -5 && f<=line_count+1){
+
+				if (check_if_in_triangle(line_count, vertex, vertex[f][n], vertex[f][n+1]) == 0){
 					
-			if (check_if_in_triangle(line_count, vertex, vertex[m][n], vertex[m][n+1]) == 0){
-
-				if (check_intersect(line_count, vertex, current_x, current_y, vertex[m][n], vertex[m][n+1]) == 0){
-						
-					if (vertex_exist(vertex[m][n], vertex[m][n+1], current_x, current_y) == 0){
-
-						//XDrawLine(display, win, red_gc, current_x, current_y, vertex[m][n], vertex[m][n+1]);
-						
-						valid_vertex[k][0] = current_x;
-						valid_vertex[k][1] = current_y;
-						valid_vertex[k][2] = vertex[m][n];
-						valid_vertex[k][3] = vertex[m][n+1];
-						valid_vertex[k][4] = find_distance(current_x, current_y, vertex[m][n], vertex[m][n+1]);
-						valid_vertex[k][5] = -1.0;
-						valid_vertex[k++][6] = -1.0;
-
-
-						if (vertex_exist(current_x, current_y, vertex[m][n], vertex[m][n+1]) == 0){
-							valid_vertex[k][0] = vertex[m][n];
-							valid_vertex[k][1] = vertex[m][n+1];
-							valid_vertex[k][2] = current_x;
-							valid_vertex[k][3] = current_y;
-							valid_vertex[k][4] = find_distance(current_x, current_y, vertex[m][n], vertex[m][n+1]);
-							valid_vertex[k][5] = -1.0;
-							valid_vertex[k++][6] = -1.0;
-						}
-
-						int f = m;
-
-						while(vertex[f][n]!= -5 && f<=line_count+1){
-							if (check_if_in_triangle(line_count, vertex, vertex[f][n], vertex[f][n+1]) == 0){
-								expand(line_count, vertex, f, n, vertex[f][n], vertex[f][n+1]);
-							}
-							f++; 
-						}
-					}
+					expand(line_count, vertex, f, n, vertex[f][n], vertex[f][n+1]);
 				}
+				f++; 
 			}
 		}
 	}
@@ -255,6 +231,7 @@ void end_graph(int line_count, int vertex[][6], int target_x, int target_y){
 	for(i=0; i<=line_count; i++){
 		for(j=0; j<6; j+=2){
 			if(check_if_in_triangle(line_count, vertex, vertex[i][j], vertex[i][j+1])==0){
+
 				if(check_intersect(line_count, vertex, vertex[i][j], vertex[i][j+1], target_x, target_y) == 0){
 					//printf("%d %d %d %d\n", vertex[i][j], vertex[i][j+1],target_x, target_y);
 					if (vertex_exist(vertex[i][j], vertex[i][j+1], target_x, target_y) == 0){
@@ -276,7 +253,6 @@ void end_graph(int line_count, int vertex[][6], int target_x, int target_y){
 void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int target_x, int target_y){
 
 	int i, j;
-	int is_intersect;
 
 	//store the start point in valid_vertex 
 	valid_vertex[k][0] = start_x;	// from x value
@@ -294,11 +270,10 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 
 			if (check_if_in_triangle(line_count, vertex, vertex[i][j], vertex[i][j+1]) == 0){
 
-				is_intersect = check_intersect(line_count, vertex, start_x, start_y, vertex[i][j], vertex[i][j+1]);
-
-				if (is_intersect == 0){
+				if (check_intersect(line_count, vertex, start_x, start_y, vertex[i][j], vertex[i][j+1]) == 0){
 					//XDrawLine(display, win, black_gc, start_x, start_y, vertex[i][j], vertex[i][j+1]);
-
+					printf("to (%d, %d)\n", vertex[i][j], vertex[i][j+1]);
+					
 					valid_vertex[k][0] = start_x;
 					valid_vertex[k][1] = start_y;
 					valid_vertex[k][2] = vertex[i][j];
@@ -374,11 +349,12 @@ int smallest_length(int total, int length_list[]){
 void check_reverse_seg(int index){
 	printf("========================= CHECK_REVERSE_SEG() =========================\n");
 	int i, p;
+
 	for(i=0; i<k; i++){
 		
 		if (valid_vertex[i][0] == valid_vertex[index][2] && valid_vertex[i][1] == valid_vertex[index][3] && valid_vertex[i][2] == valid_vertex[index][0] && valid_vertex[i][3] == valid_vertex[index][1]){
 			//if there's a reverse set it it to seen
-			printf("reverse\n");
+			printf("reverse: (%d, %d) to (%d, %d)\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3]);
 			valid_vertex[i][6] = 1.0;
 		}
 
@@ -410,9 +386,12 @@ int check_alt_path_to_point(int index, int index_of_smallest){
 	temp_k = k;
 	j = 0;
 
+	printf("index: %d      index_of_smallest: %d\n", index, index_of_smallest);
+
 	for(i=0; i<temp_k; i++){
 		
-		printf("%d %d\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1]);
+		//printf("%d %d\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1]);
+		printf("%d == %d && %d == %d  \n", (int)valid_vertex[i][0], (int)valid_vertex[index][0], (int)valid_vertex[i][1], (int)valid_vertex[index][1]);
 		if (valid_vertex[i][0] == valid_vertex[index][0] && valid_vertex[i][1] == valid_vertex[index][1]){
 			
 			printf("(%d %d) to (%d %d) %f\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][6]);
@@ -450,7 +429,7 @@ int check_alt_path_to_point(int index, int index_of_smallest){
 		m = smallest_length(j, temp);
 		return m;
 	}else{
-		printf("FIGURE OUT %d\n", j);
+		printf("FIGURE OUT %d: %d \n", j, index);
 		return -100;
 	}
 	
@@ -465,6 +444,7 @@ int dijkstra(int index_of_smallest){
 
 
 	for (i=0; i<k; i++){
+		printf("%d == %d && %d == %d\n", (int)valid_vertex[i][0], (int)valid_vertex[index_of_smallest][2], (int)valid_vertex[i][1], (int)valid_vertex[index_of_smallest][3]);
 		if (valid_vertex[i][0] == valid_vertex[index_of_smallest][2] && valid_vertex[i][1] == valid_vertex[index_of_smallest][3]){
 			//neighboring vertex
 			if (valid_vertex[i][6] != 1.0 && valid_vertex[i][6] != 0.0 ){
@@ -492,8 +472,8 @@ int dijkstra(int index_of_smallest){
 		m = check_alt_path_to_point(m, index_of_smallest);
 		//set to visit which is the value of 1.0 and deadend
 		printf("G: %d\n", m);
-		return m;
-		//return -100;
+		//return m;
+		return -100;
 	}
 }
 
@@ -616,14 +596,14 @@ int main(int argc, char *argv[]){
 
 				
 				int j;
-				/*
+				
 				for (i = 0; i <= line_count ; i++){
 					for (j=0; j<6; j+=2){
 						m[i][j] = m[i][j] + 100;
 						m[i][j+1] = m[i][j+1] + 100;
 					}
 				}
-				*/
+				
 
 				for (i = 0; i <=line_count; i++){
 					//Draw the triangles
@@ -697,14 +677,14 @@ int main(int argc, char *argv[]){
 						rewind(fp);
 						
 						int j;
-						/*
+						
 						for (i = 0; i <= line_count ; i++){
 							for (j=0; j<6; j+=2){
 								vertex[i][j] = vertex[i][j] + 100;
 								vertex[i][j+1] = vertex[i][j+1] + 100;
 							}
 						}
-						*/
+						
 
 						start_graph(line_count, vertex, start_x, start_y, target_x, target_y);
 
