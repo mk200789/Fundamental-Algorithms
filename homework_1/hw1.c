@@ -18,8 +18,6 @@ typedef int bool;
 #define true 1
 #define false 0
 
-int intersect = false;
-
 Display *display;
 Window win;
 GC green_gc, red_gc, black_gc, light_purple_gc;
@@ -123,7 +121,7 @@ int check_intersect(int line_count, int vertex[][6], int start_x, int start_y, i
 }
 
 int expand(int line_count, int vertex[][6], int m, int n, int current_x, int current_y){
-	int i, j, l;
+	int i, j;
 	
 	for (i=0; i<=line_count; i++){
 		for (j=0; j<6; j+=2){
@@ -170,21 +168,21 @@ void valid_vertices(int line_count, int vertex[][6], int i, int current_x, int c
 		Get all the valid vertices in a valid_vertex[] list.
 	*/
 	
-	int m, n, f;
+	int m, n, o;
 
 	for (m=0; m<=line_count; m++){
 
 		for(n=0; n<6; n+=2){
 
-			f = m;
+			o = m;
 
-			while(vertex[f][n]!= -5 && f<=line_count+1){
+			while(vertex[o][n]!= -5 && o<=line_count+1){
 
-				if (check_if_in_triangle(line_count, vertex, vertex[f][n], vertex[f][n+1]) == 0){
+				if (check_if_in_triangle(line_count, vertex, vertex[o][n], vertex[o][n+1]) == 0){
 					
-					expand(line_count, vertex, f, n, vertex[f][n], vertex[f][n+1]);
+					expand(line_count, vertex, o, n, vertex[o][n], vertex[o][n+1]);
 				}
-				f++; 
+				o++; 
 			}
 		}
 	}
@@ -288,7 +286,7 @@ int smallest_length(int total, int length_list[]){
 	*/
 	
 	double smallest;
-	int i, j, m, goal;
+	int i, j, index, goal;
 
 	if (valid_vertex[length_list[0]][6] == -2.0){
 	}
@@ -296,7 +294,7 @@ int smallest_length(int total, int length_list[]){
 		smallest = valid_vertex[length_list[0]][5];
 		valid_vertex[length_list[0]][6] = 0.0;
 	}
-	m = length_list[0];
+	index = length_list[0];
 	goal = 0;
 
 	for (i=0; i<total; i++){
@@ -304,19 +302,19 @@ int smallest_length(int total, int length_list[]){
 		j = length_list[i];
 		
 		if (valid_vertex[j][6] == -2.0){
-			valid_vertex[m][6] = -1.0;
+			valid_vertex[index][6] = -1.0;
 			smallest = valid_vertex[j][5];
 			valid_vertex[j][6] = -4.0;
-			m = j;
+			index = j;
 			goal = 1;
 			break;
 		}
 		if (valid_vertex[j][6] == -1.0){
 			if (valid_vertex[j][5] <= smallest){
-				valid_vertex[m][6] = -1.0;
+				valid_vertex[index][6] = -1.0;
 				valid_vertex[j][6] = 0.0;
 				smallest = valid_vertex[j][5];
-				m = j;
+				index = j;
 			}
 		}
 	}
@@ -327,7 +325,7 @@ int smallest_length(int total, int length_list[]){
 		return -100;
 	}
 	else{
-		return m;
+		return index;
 	}
 }
 
