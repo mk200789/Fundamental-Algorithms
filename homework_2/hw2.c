@@ -3,51 +3,239 @@
 #include <stdlib.h>
 #include <math.h>
 
-//int rand_lp(int n, double *A, double *b, double *c, double *result){
-int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
+double result[4];
 
-   int row = 4, col 5; 
-   int steps = 0;
-   int inequality1 = 1, inequality2 = 2, inequality3 = 3 , inequality4 = 4;
-   double matrix_a[row][col], matrix_b[col];
-   int s1, s2, i, j, left_hand_eq;
-
-   for (i=0; i<row; i++){
-      //Set all result to 10000
-      result[i] = 10000;
+int update_matrix(double matrix_b[]){
+   double sum = 0;
+   int i;
+   for(i=0; i<4; i++){
+      sum += (matrix_b[i] * result[i]);
+   }
+   
+   if(sum <= matrix_b[4]){
+      return 1;
    }
 
-   for (i=row; i<n; i++){
-      left_hand_eq = a[i][0]*result[0] + a[i][1]*result[1] + a[i][2]*result[2] + a[i][3]*result[3];
+   return 0;
+}
 
-      if(left_hand_eq > b[i]){
-         steps++;
-         for (j=0; j<row; j++){
-            //solving
-            if (j == 0){
+int calculate_result(double matrix_a[][5]){
+   int i, j, k = 0;
+   double temp_a[4][5];
 
-            }
-            else if (j == 1){
+   for (i=1; i<5; i++){
+      for (j=0; j<5; j++){
+         if(matrix_a[0][0] == 0){
+            temp_a[0][j] = 0;
+         }
+         else{
+            temp_a[0][j] = matrix_a[0][j] * (matrix_a[i][0]/matrix_a[0][0]);
+         }
+      }
+      for (j=0; j<5; j++){
+         matrix_a[i][j] = matrix_a[i][j] - temp_a[0][j];
+      }
+   }
 
-            }
-            else if (j == 2){
+   for(i=2; i<5; i++){
+      for(j=1; j<5; j++){
+         if(matrix_a[1][1] == 0){
+            temp_a[1][j] = 0;
+         }
+         else{
+            temp_a[1][j] = matrix_a[1][j] * (matrix_a[i][1]/matrix_a[1][1]);
+         }
+      }
+      for(j=1; j<5; j++){
+         matrix_a[i][j] = matrix_a[i][j] - temp_a[1][j];
+      }
+   }
 
-            }
-            else{
-               
-            }
+
+   for(i=2; i<5; i++){
+      if(matrix_a[1][1] == 0){
+         temp_a[2][i] = 0;
+      }
+      else{
+         temp_a[2][i] = matrix_a[2][i] * (matrix_a[3][2]/matrix_a[2][2]);
+      }
+   }
+
+   for(i=2; i<5; i++){
+      matrix_a[3][i] = matrix_a[3][i] - temp_a[2][i];
+   }
+
+
+
+   for(i=0; i<4; i++){
+      for(j=0; j<4; j++){
+         if(matrix_a[i][j] != 0){
+            k++;
+            break;
          }
       }
    }
 
-   //return steps;
+   if(k >= 4){
+      result[3] = matrix_a[3][4]/matrix_a[3][3];
+      result[2] = (matrix_a[2][4] - (result[3]*matrix_a[2][3])) / matrix_a[2][2];
+      result[1] = (matrix_a[1][4] - (result[3]*matrix_a[1][3]) - (result[2]*matrix_a[1][2])) / matrix_a[1][1];
+      result[0] = (matrix_a[0][4] - (result[3]*matrix_a[0][3]) - (result[2]*matrix_a[0][2]) - (result[1]*matrix_a[0][1])) / matrix_a[0][0];
+      return 1;
+   }
+
    return 0;
+ 
+}
+
+//int rand_lp(int n, double *A, double *b, double *c, double *result){
+int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
+   int row = 4, col = 5;
+   int steps = 0; //Keep track of recomputation steps
+   int inequality1 = 0, inequality2 = 1, inequality3 = 2 , inequality4 = 3;
+   double matrix_a[4][5], matrix_b[5], left_hand_eq;
+   int s1, s2, i, j, p;
+
+   for (i=0; i<4; i++){
+      //Set all result to 60000
+      result[i] = 600000;
+   }
+
+   for (i=row; i< n; i++){
+      left_hand_eq = A[i][0]*result[0] + A[i][1]*result[1] + A[i][2]*result[2] + A[i][3]*result[3];
+
+
+      if(left_hand_eq > b[i]){
+         steps++;
+
+         for (j=0; j<4; j++){
+            //solving
+            if (j == 0){
+               for (p = 0; p < col; p ++){
+                  if (p == 4){
+                     matrix_a[0][p] = b[inequality2];
+                     matrix_a[1][p] = b[inequality3];
+                     matrix_a[2][p] = b[inequality4];
+                     matrix_a[3][p] = b[i];
+                     matrix_b[p] = b[inequality1];
+                  }
+                  else{
+                     matrix_a[0][p] = A[inequality2][p];
+                     matrix_a[1][p] = A[inequality3][p];
+                     matrix_a[2][p] = A[inequality4][p];
+                     matrix_a[3][p] = A[i][p];
+                     matrix_b[p] = A[inequality1][p];
+                  }
+               }
+               s1 = calculate_result(matrix_a);
+               if (s1 == 1){
+                  s2 = update_matrix(matrix_b);
+                  if (s2 == 1){
+                     inequality1 = i;
+                     break;
+                  }
+               }
+            }
+            else if (j == 1){
+               for (p = 0; p < col; p ++){
+                  if (p == 4){
+                     matrix_a[0][p] = b[inequality1];
+                     matrix_a[1][p] = b[inequality3];
+                     matrix_a[2][p] = b[inequality4];
+                     matrix_a[3][p] = b[i];
+                     matrix_b[p] = b[inequality2];
+                  }
+                  else{
+                     matrix_a[0][p] = A[inequality1][p];
+                     matrix_a[1][p] = A[inequality3][p];
+                     matrix_a[2][p] = A[inequality4][p];
+                     matrix_a[3][p] = A[i][p];
+                     matrix_b[p] = A[inequality2][p];
+                  }
+               }
+               s1 = calculate_result(matrix_a);
+               if (s1 == 1){
+                  s2 = update_matrix(matrix_b);
+                  if (s2 == 1){
+                     inequality2 = i;
+                     break;
+                  }
+               }
+            }
+            else if (j == 2){
+               for (p = 0; p < col; p ++){
+                  if (p == 4){
+                     matrix_a[0][p] = b[inequality1];
+                     matrix_a[1][p] = b[inequality2];
+                     matrix_a[2][p] = b[inequality4];
+                     matrix_a[3][p] = b[i];
+                     matrix_b[p] = b[inequality3];
+                  }
+                  else{
+                     matrix_a[0][p] = A[inequality1][p];
+                     matrix_a[1][p] = A[inequality2][p];
+                     matrix_a[2][p] = A[inequality4][p];
+                     matrix_a[3][p] = A[i][p];
+                     matrix_b[p] = A[inequality3][p];
+                  }
+               }
+               s1 = calculate_result(matrix_a);
+               if (s1 == 1){
+                  s2 = update_matrix(matrix_b);
+                  if (s2 == 1){
+                     inequality3 = i;
+                     break;
+                  }
+               }
+            }
+            else if (j == 3){
+               for (p = 0; p < col; p ++){
+                  if (p == 4){
+                     matrix_a[0][p] = b[inequality1];
+                     matrix_a[1][p] = b[inequality2];
+                     matrix_a[2][p] = b[inequality3];
+                     matrix_a[3][p] = b[i];
+                     matrix_b[p] = b[inequality4];
+                  }
+                  else{
+                     matrix_a[0][p] = A[inequality1][p];
+                     matrix_a[1][p] = A[inequality2][p];
+                     matrix_a[2][p] = A[inequality3][p];
+                     matrix_a[3][p] = A[i][p];
+                     matrix_b[p] = A[inequality4][p];
+                  }
+               }
+               s1 = calculate_result(matrix_a);
+               if (s1 == 1){
+                  s2 = update_matrix(matrix_b);
+                  if (s2 == 1){
+                     inequality4 = i;
+                     break;
+                  }
+                  else{
+                     inequality4 = i;
+                     result[0] = 600000;
+                     result[1] = 600000;
+                     result[2] = 600000;
+                     result[3] = 600000;
+                     break;
+                  }
+               }
+            }
+         }
+      }
+   }
+   printf("inequality1 %d\n", inequality1);
+   printf("inequality2 %d\n", inequality2);
+   printf("inequality3 %d\n", inequality3);
+   printf("inequality4 %d\n", inequality4);
+   return steps;
 }
 
 main()
 {  
    double A[600000][4],  b[600000], c[4] ;
-   double result[4];
+   //double result[4];
    int i, j; double s, t;
    printf("Preparing test: 4 variables, 600000 inequalities\n");
    A[0][0] = 1.0; A[0][1] = 2.0; A[0][2] = 1.0; A[0][3] = 0.0; b[0] = 10000.0;
