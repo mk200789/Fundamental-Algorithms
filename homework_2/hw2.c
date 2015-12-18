@@ -25,6 +25,7 @@ int update_matrix(double matrix_b[]){
    return 0;
 }
 
+
 int calculate_result(double matrix_a[][5]){
    int i, j, k = 0;
    double temp_a[4][5];
@@ -38,12 +39,13 @@ int calculate_result(double matrix_a[][5]){
             temp_a[0][j] = matrix_a[0][j] * (matrix_a[i][0]/matrix_a[0][0]);
          }
       }
+
       for (j=0; j<5; j++){
          matrix_a[i][j] = matrix_a[i][j] - temp_a[0][j];
       }
    }
 
-   for(i=2; i<5; i++){
+   for(i=2; i<4; i++){
       for(j=1; j<5; j++){
          if(matrix_a[1][1] == 0){
             temp_a[1][j] = 0;
@@ -92,6 +94,7 @@ int calculate_result(double matrix_a[][5]){
  
 }
 
+
 //int rand_lp(int n, double *A, double *b, double *c, double *result){
 int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
    int row = 4, col = 5;
@@ -104,6 +107,7 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
       //Set all result to 60000
       result[i] = 600000;
    }
+
 
    for (i=row; i< n; i++){
       left_hand_eq = A[i][0]*result[0] + A[i][1]*result[1] + A[i][2]*result[2] + A[i][3]*result[3];
@@ -228,11 +232,10 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
          }
       }
    }
-
    return steps;
 }
 
-main()
+int main()
 {  
    double A[600000][4],  b[600000], c[4] ;
    //double result[4];
@@ -301,5 +304,6 @@ main()
    j = rand_lp(600000, A, b, c, result);
    printf("Test: extremal point (%f, %f, %f, %f) after %d recomputation steps\n", result[0], result[1], result[2], result[3], j);
    printf("Answer should be (1,2,3,4)\n End Test\n");
+   return 0;
 }
 
