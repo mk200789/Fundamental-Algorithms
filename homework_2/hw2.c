@@ -1,19 +1,25 @@
+/* 
+   Compiles with command line  gcc -o assign2 hw2.c
+   Run : ./assign2 
+   Homework #2
+   Wan Kim Mok
+   Due: November 04, 2015
+*/
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 
 double result[4];
 
 int update_matrix(double matrix_b[]){
    double sum = 0;
    int i;
+
    for(i=0; i<4; i++){
       sum += (matrix_b[i] * result[i]);
    }
    
    if(sum <= matrix_b[4]){
-      return 1;
+      return -1;
    }
 
    return 0;
@@ -51,7 +57,6 @@ int calculate_result(double matrix_a[][5]){
       }
    }
 
-
    for(i=2; i<5; i++){
       if(matrix_a[1][1] == 0){
          temp_a[2][i] = 0;
@@ -64,8 +69,7 @@ int calculate_result(double matrix_a[][5]){
    for(i=2; i<5; i++){
       matrix_a[3][i] = matrix_a[3][i] - temp_a[2][i];
    }
-
-
+   
 
    for(i=0; i<4; i++){
       for(j=0; j<4; j++){
@@ -76,12 +80,12 @@ int calculate_result(double matrix_a[][5]){
       }
    }
 
-   if(k >= 4){
+   if(k == 4){
       result[3] = matrix_a[3][4]/matrix_a[3][3];
       result[2] = (matrix_a[2][4] - (result[3]*matrix_a[2][3])) / matrix_a[2][2];
       result[1] = (matrix_a[1][4] - (result[3]*matrix_a[1][3]) - (result[2]*matrix_a[1][2])) / matrix_a[1][1];
       result[0] = (matrix_a[0][4] - (result[3]*matrix_a[0][3]) - (result[2]*matrix_a[0][2]) - (result[1]*matrix_a[0][1])) / matrix_a[0][0];
-      return 1;
+      return -1;
    }
 
    return 0;
@@ -94,7 +98,7 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
    int steps = 0; //Keep track of recomputation steps
    int inequality1 = 0, inequality2 = 1, inequality3 = 2 , inequality4 = 3;
    double matrix_a[4][5], matrix_b[5], left_hand_eq;
-   int s1, s2, i, j, p;
+   int i, j, p;
 
    for (i=0; i<4; i++){
       //Set all result to 60000
@@ -127,11 +131,11 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
                      matrix_b[p] = A[inequality1][p];
                   }
                }
-               s1 = calculate_result(matrix_a);
-               if (s1 == 1){
-                  s2 = update_matrix(matrix_b);
-                  if (s2 == 1){
+
+               if (calculate_result(matrix_a) == -1){
+                  if (update_matrix(matrix_b) == -1){
                      inequality1 = i;
+                     //printf("[j=0] inequality1: %d\n", inequality1);
                      break;
                   }
                }
@@ -153,11 +157,11 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
                      matrix_b[p] = A[inequality2][p];
                   }
                }
-               s1 = calculate_result(matrix_a);
-               if (s1 == 1){
-                  s2 = update_matrix(matrix_b);
-                  if (s2 == 1){
+
+               if (calculate_result(matrix_a) == -1){
+                  if (update_matrix(matrix_b) == -1){
                      inequality2 = i;
+                     //printf("[j=1] inequality2: %d\n", inequality2);
                      break;
                   }
                }
@@ -179,11 +183,11 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
                      matrix_b[p] = A[inequality3][p];
                   }
                }
-               s1 = calculate_result(matrix_a);
-               if (s1 == 1){
-                  s2 = update_matrix(matrix_b);
-                  if (s2 == 1){
+
+               if (calculate_result(matrix_a) == -1){
+                  if (update_matrix(matrix_b) == -1){
                      inequality3 = i;
+                     //printf("[j=2] inequality3: %d\n", inequality3);
                      break;
                   }
                }
@@ -205,11 +209,10 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
                      matrix_b[p] = A[inequality4][p];
                   }
                }
-               s1 = calculate_result(matrix_a);
-               if (s1 == 1){
-                  s2 = update_matrix(matrix_b);
-                  if (s2 == 1){
+               if (calculate_result(matrix_a) == -1){
+                  if (update_matrix(matrix_b) == -1){
                      inequality4 = i;
+                     //printf("[j=3] inequality4: %d\n", inequality4);
                      break;
                   }
                   else{
@@ -225,10 +228,7 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
          }
       }
    }
-   printf("inequality1 %d\n", inequality1);
-   printf("inequality2 %d\n", inequality2);
-   printf("inequality3 %d\n", inequality3);
-   printf("inequality4 %d\n", inequality4);
+
    return steps;
 }
 
