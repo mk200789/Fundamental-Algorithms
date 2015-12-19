@@ -1,16 +1,26 @@
 /* 
-   Compiles with command line  gcc -o assign2 hw2.c
-   Run : ./assign2 
+   Compiles and run with command lines  
+   on mac osx: 
+               gcc -o hw2 hw2.c
+               limit -s hard [optional]
+               ./hw2
+   on ubuntu/linux:
+               gcc -o hw2 hw2.c
+               ulimit -s unlimited
+               ./hw2
    Homework #2
    Wan Kim Mok
    Due: November 04, 2015
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 
-double result[4];
 
-int update_matrix(double matrix_b[]){
+int const N = 600000, M = 4;
+
+
+int update_matrix(double matrix_b[], double result[]){
    double sum = 0;
    int i;
 
@@ -26,7 +36,7 @@ int update_matrix(double matrix_b[]){
 }
 
 
-int calculate_result(double matrix_a[][5]){
+int calculate_result(double matrix_a[][5], double result[]){
    int i, j, k = 0;
    double temp_a[4][5];
 
@@ -96,12 +106,15 @@ int calculate_result(double matrix_a[][5]){
 
 
 //int rand_lp(int n, double *A, double *b, double *c, double *result){
-int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
+int rand_lp(int n, double **A, double b[], double c[], double result[]){
    int row = 4, col = 5;
    int steps = 0; //Keep track of recomputation steps
    int inequality1 = 0, inequality2 = 1, inequality3 = 2 , inequality4 = 3;
    double matrix_a[4][5], matrix_b[5], left_hand_eq;
    int i, j, p;
+
+
+
 
    for (i=0; i<4; i++){
       //Set all result to 60000
@@ -136,8 +149,8 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
                   }
                }
 
-               if (calculate_result(matrix_a) == -1){
-                  if (update_matrix(matrix_b) == -1){
+               if (calculate_result(matrix_a, result) == -1){
+                  if (update_matrix(matrix_b, result) == -1){
                      inequality1 = i;
                      //printf("[j=0] inequality1: %d\n", inequality1);
                      break;
@@ -162,8 +175,8 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
                   }
                }
 
-               if (calculate_result(matrix_a) == -1){
-                  if (update_matrix(matrix_b) == -1){
+               if (calculate_result(matrix_a, result) == -1){
+                  if (update_matrix(matrix_b, result) == -1){
                      inequality2 = i;
                      //printf("[j=1] inequality2: %d\n", inequality2);
                      break;
@@ -188,8 +201,8 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
                   }
                }
 
-               if (calculate_result(matrix_a) == -1){
-                  if (update_matrix(matrix_b) == -1){
+               if (calculate_result(matrix_a, result) == -1){
+                  if (update_matrix(matrix_b, result) == -1){
                      inequality3 = i;
                      //printf("[j=2] inequality3: %d\n", inequality3);
                      break;
@@ -213,8 +226,8 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
                      matrix_b[p] = A[inequality4][p];
                   }
                }
-               if (calculate_result(matrix_a) == -1){
-                  if (update_matrix(matrix_b) == -1){
+               if (calculate_result(matrix_a, result) == -1){
+                  if (update_matrix(matrix_b, result) == -1){
                      inequality4 = i;
                      //printf("[j=3] inequality4: %d\n", inequality4);
                      break;
@@ -232,14 +245,30 @@ int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
          }
       }
    }
+
+   
    return steps;
 }
 
 int main()
 {  
-   double A[600000][4],  b[600000], c[4] ;
-   //double result[4];
+   //double A[600000][4],  b[600000], c[4] ;
    int i, j; double s, t;
+   double **A, *b, c[M];
+   double result[M];
+   
+   //allocate an array of N pointers to double
+   //malloc returns the adress of this array (a pointer to (double *))
+   A = (double **)malloc(sizeof(double *)*N);
+
+   //for each row, allocate an array size of M pointers to double
+   for (i=0; i<N; i++){
+      A[i] = (double *)malloc(sizeof(double)*M);
+   }
+   
+   //allocate an array of N pointers to double
+   b = (double *)malloc(sizeof(double)*N);
+
    printf("Preparing test: 4 variables, 600000 inequalities\n");
    A[0][0] = 1.0; A[0][1] = 2.0; A[0][2] = 1.0; A[0][3] = 0.0; b[0] = 10000.0;
    A[1][0] = 0.0; A[1][1] = 1.0; A[1][2] = 2.0; A[1][3] = 1.0; b[1] = 10000.0;
@@ -277,14 +306,17 @@ int main()
    A[300001][3] = 4.0; b[300001] = 32.0;
    A[300002][0] = 7.0; A[300002][1] = 1.0; A[300002][2] = 1.0; 
    A[300002][3] = 7.0; b[300002] = 40.0;
+   
    for( i=300003; i< 400000; i++ )
-   {  A[i][0] = (13*i)%103087; 
-      A[i][1] = (99*i)%103087; 
-      A[i][2] = (2012*i)%103087; 
-      A[i][3] = (666*i)%103087;
-      b[i] = A[i][0] + 2*A[i][1] + 3*A[i][2] + 4* A[i][3] + 1;
-   }
-   for( i=400000; i< 500000; i++ )
+      {  
+            A[i][0] = (13*i)%103087; 
+         A[i][1] = (99*i)%103087; 
+         A[i][2] = (2012*i)%103087; 
+         A[i][3] = (666*i)%103087;
+         b[i] = A[i][0] + 2*A[i][1] + 3*A[i][2] + 4* A[i][3] + 1;
+      }
+
+for( i=400000; i< 500000; i++ )
    {  A[i][0] = 1; 
       A[i][1] = (17*i)%999983; 
       A[i][2] = (1967*i)%444443; 
@@ -298,12 +330,13 @@ int main()
       A[i][3] = i;
       b[i] = A[i][0] + 2*A[i][1] + 3*A[i][2] + 4* A[i][3] + 1.3;
    }
-   
-   printf("Running test: 600000 inequalities, 4 variables\n");
-   //j = rand_lp(600000, &(A[0][0]), &(b[0]), &(c[0]), &(result[0]));
+
    j = rand_lp(600000, A, b, c, result);
    printf("Test: extremal point (%f, %f, %f, %f) after %d recomputation steps\n", result[0], result[1], result[2], result[3], j);
+   
    printf("Answer should be (1,2,3,4)\n End Test\n");
+   free(A);
+   free(b);
    return 0;
 }
 
