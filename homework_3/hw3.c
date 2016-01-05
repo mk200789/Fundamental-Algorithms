@@ -117,6 +117,17 @@ int check_intersect(int v[], int h[]){
 	
 }
 
+void printMST(int visited[][2], int count){
+	int i, distance;
+	for (i=1; i< count; i++){
+		distance = v_segment_graph[i][visited[i][1]][1];
+        //printf("x1: %d, y1: %d\n", v_line_segment[visited[i][1]][0], h_line_segment[distance][1]);
+        //printf("x2: %d, y2: %d\n", v_line_segment[i][0], h_line_segment[distance][1]);
+		XDrawLine(display, win, red_gc, v_line_segment[visited[i][1]][0], h_line_segment[distance][1],v_line_segment[i][0], h_line_segment[distance][1]);
+
+	}
+}
+
 void vertical_MST(v_count){
 	//Prim's algorith: Adjacency Matrix Implementation.
 	int i, j, k;
@@ -166,6 +177,7 @@ void vertical_MST(v_count){
 		printf("%d\n", visited[i][1]);
 	}
 */
+	printMST(visited, v_count);
 	return;
 }
 
@@ -339,6 +351,7 @@ int main(int argc, char *argv[]){
 
 	red_gc = XCreateGC(display, win, 0, 0);
 	XParseColor(display, colormap, red, &red_col);
+	XSetLineAttributes(display, red_gc, 3, LineSolid, CapRound, JoinRound);
 	if (XAllocColor(display, colormap, &red_col) == 0){
 		//printf("Failed to get color red\n");
 		exit(-1);
@@ -393,6 +406,8 @@ int main(int argc, char *argv[]){
 	int i;
 	//stores variable v or h
 	char temp[temp_line_count];
+	//stores array to display
+	int m[temp_line_count][4];
 
 	for (i=0; i <temp_line_count; i++){
 		fscanf(fp, "%s %*d, %*d, %*d", &temp[i]);
@@ -403,12 +418,20 @@ int main(int argc, char *argv[]){
 		if (temp[i] == 104){
 			fscanf(fp, "%*s %d, %d, %d", &h_line_segment[h_count][1], &h_line_segment[h_count][0], &h_line_segment[h_count][2]);
 			h_line_segment[h_count][3] = h_line_segment[h_count][1];
+			m[line_count][0]= h_line_segment[h_count][0];
+			m[line_count][1]= h_line_segment[h_count][1];
+			m[line_count][2]= h_line_segment[h_count][2];
+			m[line_count][3]= h_line_segment[h_count][3];
 			h_count++;
 			line_count++;
 		}
 		if (temp[i] == 118){
 			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[v_count][0], &v_line_segment[v_count][1], &v_line_segment[v_count][3]);
 			v_line_segment[v_count][2] = v_line_segment[v_count][0];
+			m[line_count][0]= v_line_segment[v_count][0];
+			m[line_count][1]= v_line_segment[v_count][1];
+			m[line_count][2]= v_line_segment[v_count][2];
+			m[line_count][3]= v_line_segment[v_count][3];
 			v_count++;
 			line_count++;
 		}
@@ -417,11 +440,10 @@ int main(int argc, char *argv[]){
 
 	printf("total processed line count: %d\n", line_count);
 
-	graph_vertical_segments(h_count, v_count);
-	vertical_MST(v_count);
 
 
-/*
+
+
 while(1){
 		XNextEvent(display, &report);
 		switch(report.type){
@@ -435,11 +457,25 @@ while(1){
 				XFlush(display);
 				break;
 			}
+			case ButtonPress:
+			{
+				if (report.xbutton.button == Button1){
+					//left click
+					graph_vertical_segments(h_count, v_count);
+					vertical_MST(v_count);
+				}
+				else{
+					printf("Closing Window.\n");
+					XDestroyWindow(display, win);
+					XCloseDisplay(display);
+					exit(1);
+				}
+			}
 			default:
 				break;
 		}
 	}
-*/
+
 	fclose(fp);
 	return 0;
 }
