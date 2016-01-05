@@ -14,9 +14,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define MAX_NUM_SEGMENT = 200 
-#define MAX_DIG = 4
-
 Display *display;
 Screen *screen;
 unsigned int display_width, display_height;
@@ -64,18 +61,75 @@ double find_distance(int x1, int y1, int x2, int y2){
 }
 
 int orientation(int ax, int ay, int bx, int by, int cx, int cy){
-	/*
-		If return value is equal to 0, vertices are collinear.
-		If return value is more than  0, triangle is counterclockwise.
-		If return value is less than  0, triangle is clockwise.
-	*/
-	return (ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax);
+	
+	//	If return value is equal to 0, vertices are collinear. [0]
+	//	If return value is more than  0, triangle is counterclockwise. [1]
+	//	If return value is less than  0, triangle is clockwise. [-1]
+	        
+    double d = ((ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax));
+    
+    if (d == 0){
+        return 0;           
+    }
+    else if (d > 0){
+    	return 1;
+    }       
+    else{
+    	return -1;
+    }         
 }
 
 
+int isSame_segment(int ax, int ay, int bx, int by){
+	if (ax == bx && ay == by){
+		//same line segment
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
+int check_intersect(int v[], int h[]){
+	/*
+		Checks if the given line intersects with any of the triangle's line.
+		Returns 1 if interesects, else return 0.
+	*/
+
+	int ABS = orientation(v[0], v[1], v[2], v[3], h[0], h[1]);
+	int ABT = orientation(v[0], v[1], v[2], v[3], h[2], h[3]);
+	int STA = orientation(h[0], h[1], h[2], h[3], v[0], v[1]);
+	int STB = orientation(h[0], h[1], h[2], h[3], v[2], v[3]);
+	//printf("ABS*ABT: %d. STA*STB: %d\n", ABS*ABT, STA*STB);
+	if (isSame_segment(v[0], v[1], h[0], h[1]) == 1 && isSame_segment(v[2], v[3], h[2], h[3]) == 1){
+		return 1;
+	}
+	if (ABS != ABT && STA != STB){
+		return 1;
+	}
+
+	return 0;
+	
+}
+
 //generate path for vertical segments
-void graph_vertical_segments(line_count){
-	int i;
+void graph_vertical_segments(h_count, v_count){
+	//you define a graph Gh with the horizontal segments as vertices, and join two
+	//of these vertices by an edge if they are intersected by the same vertical segment; the
+	//length of this edge is their distance along the segment.
+	int k, i, j;
+
+	for (i=0; i<v_count; i++){
+		for (k=0; k<h_count; k++){
+			for (j=i+1; j<v_count; j++){
+				//printf("%d\n", h_line_segment[k][0]);
+				if (check_intersect(v_line_segment[i], h_line_segment[k]) == 1 && check_intersect(v_line_segment[j], h_line_segment[k]) == 1){
+					printf("%d\n", v_line_segment[i][0]);
+				}
+			}
+		}
+	}
+	
 	return;
 }
 
@@ -234,66 +288,45 @@ int main(int argc, char *argv[]){
 	int i;
 	//stores variable v or h
 	char temp[temp_line_count];
-	//stores the input in a 2d array
-	int m[temp_line_count][4];
 
 	for (i=0; i <temp_line_count; i++){
 		fscanf(fp, "%s %*d, %*d, %*d", &temp[i]);
 	}
 	rewind(fp);
 
+	int h = 0;
+	int v = 0;
+	
 	for (i=0; i< temp_line_count; i++){
 		if (temp[i] == 104){
-			//horizal line segment
-			fscanf(fp, "%*s %d, %d, %d", &m[i][1], &m[i][0], &m[i][2]);
-			m[i][3] = m[i][1];
+			fscanf(fp, "%*s %d, %d, %d", &h_line_segment[h][1], &h_line_segment[h][0], &h_line_segment[h][2]);
+			h_line_segment[h][3] = h_line_segment[h][1];
+			//fill the additional last 2 spots with default value
+			//the 5th spot holds the distance
+			//the 6th spot holds if there's any connection to other paths
+			h_line_segment[h][4] = 0;
+			h_line_segment[h++][5] = -1;
+			h_count++;
 			line_count++;
 		}
-		else if (temp[i] == 118){
-			//vertical line segment
-			fscanf(fp, "%*s %d, %d, %d", &m[i][0], &m[i][1], &m[i][3]);
-			m[i][2] = m[i][0];
+		if (temp[i] == 118){
+			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[v][0], &v_line_segment[v][1], &v_line_segment[v][3]);
+			v_line_segment[v][2] = v_line_segment[v][0];
+			//fill the additional last 2 spots with default value
+			//the 5th spot holds the distance
+			//the 6th spot holds if there's any connection to other paths
+			v_line_segment[v][4] = 0;
+			v_line_segment[v++][5] = -1;
+			v_count++;
 			line_count++;
 		}
 	}
-	rewind(fp);
+	//rewind(fp);
 
 	printf("total processed line count: %d\n", line_count);
 
 
-	//horizntal line segments
-	for (i=0; i< temp_line_count; i++){
-		if (temp[i] == 104){
-			//horizal line segment
-			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[i][1], &h_line_segment[i][0], &h_line_segment[i][2]);
-			h_line_segment[i][3] = h_line_segment[i][1];
-			//fill the additional last 2 spots with default value
-			//the 5th spot holds the distance
-			//the 6th spot holds if there's any connection to other paths
-			h_line_segment[i][4] = 0;
-			h_line_segment[i][5] = -1;
-			h_count++;
-		}
-	}
-	rewind(fp);
-
-	//vertical line segment
-	for (i=0; i< temp_line_count; i++){
-		if (temp[i] == 118){
-			//vertical line segment
-			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[i][0], &v_line_segment[i][1], &v_line_segment[i][3]);
-			v_line_segment[i][2] = v_line_segment[i][0];
-			//fill the additional last 2 spots with default value
-			//the 5th spot holds the distance
-			//the 6th spot holds if there's any connection to other paths
-			v_line_segment[i][4] = 0;
-			v_line_segment[i][5] = -1;
-			v_count++;
-		}
-	}
-	rewind(fp);
-
-	graph_vertical_segments(v_count);
+	graph_vertical_segments(h_count, v_count);
 
 
 /*
