@@ -14,7 +14,8 @@
 int main(int argc, char *argv[]){
 	FILE *fp;
 	char c;
-	int line_count = 0;
+	int temp_line_count = 0;
+	int line_count = 0; //holds the actual lines that aren't empty
 
 	fp = fopen(argv[1], "r");
 
@@ -29,40 +30,43 @@ int main(int argc, char *argv[]){
 			c = fgetc(fp);
 
 			if (c == 10){
-				line_count++;
+				temp_line_count++;
 			}
 		}
 		rewind(fp);
 	}
 
-	printf("total line: %d\n", line_count);
+	printf("total raw line count: %d\n", temp_line_count);
 	int i;
 	//stores variable v or h
-	char temp[line_count+1];
-
+	char temp[temp_line_count+1];
 	//stores the input in a 2d array
-	int m[line_count+1][4];
-	
-	for (i=0; i <=line_count; i++){
+	int m[temp_line_count+1][4];
+
+	for (i=0; i <=temp_line_count; i++){
 		fscanf(fp, "%s %*d, %*d, %*d", &temp[i]);
 	}
 	rewind(fp);
 
-	for (i=0; i<=line_count; i++){
+	for (i=0; i<=temp_line_count; i++){
 		//printf("%d : %d \n", i, temp[i]);
 		if (temp[i] == 104){
 			//horizal line segment
 			fscanf(fp, "%*s %d, %d, %d", &m[i][1], &m[i][0], &m[i][2]);
 			m[i][3] = m[i][1];
+			line_count++;
 		}
 		else if (temp[i] == 118){
 			//vertical line segment
 			fscanf(fp, "%*s %d, %d, %d", &m[i][0], &m[i][1], &m[i][3]);
 			m[i][2] = m[i][0];
+			line_count++;
 		}
 	}
 
-	for (i=0; i<=line_count; i++){
+	printf("total processed line count: %d\n", line_count);
+	
+	for (i=0; i<line_count; i++){
 		printf("(%d, %d) to (%d , %d)\n", m[i][0], m[i][1], m[i][2], m[i][3]);
 	}
 
