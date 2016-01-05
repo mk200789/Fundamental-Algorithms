@@ -113,6 +113,10 @@ int check_intersect(int v[], int h[]){
 	
 }
 
+void vertical_MST(){
+	return;
+}
+
 //generate path for vertical segments
 void graph_vertical_segments(h_count, v_count){
 	//you define a graph Gh with the horizontal segments as vertices, and join two
@@ -132,7 +136,27 @@ void graph_vertical_segments(h_count, v_count){
 			}
 		}
 	}
-	
+	return;
+}
+
+void graph_horizontal_segments(h_count, v_count){
+	//you define a graph Gh with the vertical segments as vertices, and join two
+	//of these vertices by an edge if they are intersected by the same horizontal segment; the
+	//length of this edge is their distance along the segment.
+	int v, i, j;
+
+	for (i=0; i<h_count; i++){
+		for (v=0; v<v_count; v++){
+			for (j=i+1; j<h_count; j++){
+				if (check_intersect(h_line_segment[i], v_line_segment[v]) == 1 && check_intersect(h_line_segment[j], v_line_segment[v]) == 1){
+					//printf("%d, %d\n", v_line_segment[i][0], horizontal_distance(v_line_segment[i], v_line_segment[j]));
+					//save distance and which horizontal segment connected to
+					v_line_segment[i][4] = vertical_distance(h_line_segment[i], h_line_segment[j]);
+					v_line_segment[i][5] = v;
+				}
+			}
+		}
+	}
 	return;
 }
 
@@ -324,7 +348,7 @@ int main(int argc, char *argv[]){
 			line_count++;
 		}
 	}
-	//rewind(fp);
+	rewind(fp);
 
 	printf("total processed line count: %d\n", line_count);
 
