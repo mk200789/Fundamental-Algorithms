@@ -14,6 +14,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define MAX_NUM_SEGMENT = 200 
+#define MAX_DIG = 4
+
 Display *display;
 Screen *screen;
 unsigned int display_width, display_height;
@@ -45,12 +48,45 @@ char red[] = "#A80000";
 char black[] = "#000000";
 char light_purple[] = "#FFCCFF";
 
+//array holding vertical line segment
+//first 4 holds value of x1, x2, y1, y2 and last 2 holds additional information
+int v_line_segment[200][6];
+//array holding horizontal line segment
+int h_line_segment[200][6];
+
+
+
+double find_distance(int x1, int y1, int x2, int y2){
+	/*
+		Returns the distance between two points.
+	*/
+	return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+}
+
+int orientation(int ax, int ay, int bx, int by, int cx, int cy){
+	/*
+		If return value is equal to 0, vertices are collinear.
+		If return value is more than  0, triangle is counterclockwise.
+		If return value is less than  0, triangle is clockwise.
+	*/
+	return (ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax);
+}
+
+
+//generate path for vertical segments
+void graph_vertical_segments(line_count){
+	int i;
+	return;
+}
+
 
 int main(int argc, char *argv[]){
 	FILE *fp;
 	char c;
 	int temp_line_count = 1;
 	int line_count = 0; //holds the actual lines that aren't empty
+	int h_count = 0;
+	int v_count = 0;
 
 	fp = fopen(argv[1], "r");
 
@@ -137,7 +173,7 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 	else{
-		printf("Success green!\n");
+		//printf("Success green!\n");
 		XSetForeground(display, green_gc, green_col.pixel);
 
 	}
@@ -145,11 +181,11 @@ int main(int argc, char *argv[]){
 	red_gc = XCreateGC(display, win, 0, 0);
 	XParseColor(display, colormap, red, &red_col);
 	if (XAllocColor(display, colormap, &red_col) == 0){
-		printf("Failed to get color red\n");
+		//printf("Failed to get color red\n");
 		exit(-1);
 	}
 	else{
-		printf("Success red!\n");
+		//printf("Success red!\n");
 		XSetForeground(display, red_gc, red_col.pixel);
 	}
 
@@ -161,7 +197,7 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 	else{
-		printf("Success black!\n");
+		//printf("Success black!\n");
 		XSetForeground(display, black_gc, black_col.pixel);
 	}
 
@@ -173,7 +209,7 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 	else{
-		printf("Success light purple!\n");
+		//printf("Success light purple!\n");
 		XSetForeground(display, light_purple_gc, light_purple_col.pixel);
 	}
 
@@ -185,7 +221,7 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 	else{
-		printf("Success white!\n");
+		//printf("Success white!\n");
 		XSetForeground(display, white_gc, white_col.pixel);	
 	}
 
@@ -224,12 +260,43 @@ int main(int argc, char *argv[]){
 
 	printf("total processed line count: %d\n", line_count);
 
-	for (i=0; i<line_count; i++){
-		printf("(%d, %d) to (%d , %d)\n", m[i][0], m[i][1], m[i][2], m[i][3]);
+
+	//horizntal line segments
+	for (i=0; i< temp_line_count; i++){
+		if (temp[i] == 104){
+			//horizal line segment
+			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[i][1], &h_line_segment[i][0], &h_line_segment[i][2]);
+			h_line_segment[i][3] = h_line_segment[i][1];
+			//fill the additional last 2 spots with default value
+			//the 5th spot holds the distance
+			//the 6th spot holds if there's any connection to other paths
+			h_line_segment[i][4] = 0;
+			h_line_segment[i][5] = -1;
+			h_count++;
+		}
 	}
+	rewind(fp);
+
+	//vertical line segment
+	for (i=0; i< temp_line_count; i++){
+		if (temp[i] == 118){
+			//vertical line segment
+			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[i][0], &v_line_segment[i][1], &v_line_segment[i][3]);
+			v_line_segment[i][2] = v_line_segment[i][0];
+			//fill the additional last 2 spots with default value
+			//the 5th spot holds the distance
+			//the 6th spot holds if there's any connection to other paths
+			v_line_segment[i][4] = 0;
+			v_line_segment[i][5] = -1;
+			v_count++;
+		}
+	}
+	rewind(fp);
+
+	graph_vertical_segments(v_count);
 
 
-
+/*
 while(1){
 		XNextEvent(display, &report);
 		switch(report.type){
@@ -247,6 +314,7 @@ while(1){
 				break;
 		}
 	}
+*/
 	fclose(fp);
 	return 0;
 }
