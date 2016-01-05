@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <limits.h>
 
 Display *display;
 Screen *screen;
@@ -117,18 +116,31 @@ int check_intersect(int v[], int h[]){
 	
 }
 
-void printMST(int visited[][2], int count){
+void printMST(int visited[][2], int count, int who){
+	//who: 1 is for vertical , 0 is for horizontal
 	int i, distance;
-	for (i=1; i< count; i++){
-		distance = v_segment_graph[i][visited[i][1]][1];
-        //printf("x1: %d, y1: %d\n", v_line_segment[visited[i][1]][0], h_line_segment[distance][1]);
-        //printf("x2: %d, y2: %d\n", v_line_segment[i][0], h_line_segment[distance][1]);
-		XDrawLine(display, win, red_gc, v_line_segment[visited[i][1]][0], h_line_segment[distance][1],v_line_segment[i][0], h_line_segment[distance][1]);
+	if (who == 1){
+		for (i=1; i< count; i++){
+			distance = v_segment_graph[i][visited[i][1]][1];
+	        //printf("x1: %d, y1: %d\n", v_line_segment[visited[i][1]][0], h_line_segment[distance][1]);
+	        //printf("x2: %d, y2: %d\n", v_line_segment[i][0], h_line_segment[distance][1]);
+			XDrawLine(display, win, red_gc, v_line_segment[visited[i][1]][0], h_line_segment[distance][1],v_line_segment[i][0], h_line_segment[distance][1]);
 
+		}
 	}
+	else if (who == 0){
+		//horizontal
+		for (i=1; i<count; i++){
+			distance = h_segment_graph[i][visited[i][1]][1];
+			XDrawLine(display, win, light_purple_gc, 
+				v_line_segment[distance][0], h_line_segment[i][1],
+				v_line_segment[distance][0], h_line_segment[visited[i][1]][1]);
+		}
+	}
+	return;
 }
 
-void vertical_MST(v_count){
+void vertical_MST(int v_count){
 	//Prim's algorith: Adjacency Matrix Implementation.
 	int i, j, k;
 	// visited[][0] keep track of visited vertices ,
@@ -177,7 +189,56 @@ void vertical_MST(v_count){
 		printf("%d\n", visited[i][1]);
 	}
 */
-	printMST(visited, v_count);
+	printMST(visited, v_count, 1);
+	return;
+}
+
+void horizontal_MST(int h_count){
+	//Prim's algorith: Adjacency Matrix Implementation.
+	int i, j, k;
+	// visited[][0] keep track of visited vertices ,
+	// visited[][1] stores only visited index for constructing our vertical MST
+	int visited[h_count][2];
+	int minimum_path[h_count]; //stores the minimum path (edge)
+
+	//default settings
+	for(i=0; i<h_count; i++){
+		//set minimum to large number
+		minimum_path[i] = 999999;
+		//set all vertices -1 , false
+		visited[i][0] = -1;
+	}
+
+	//include the first vertex in our vertical MST
+	minimum_path[0] = 0;
+	visited[0][1] = -1;
+
+	for(i=0; i<h_count-1; i++){
+		int min = 999999;
+		int min_index;
+		//finding the minimum distance
+		for(j=0; j<h_count; j++){
+			//if unvisited compare min path distance
+			if(visited[j][0] == -1 && minimum_path[j] < min){
+				//printf("swap\n");
+				min = minimum_path[j];
+				min_index = j;
+			}
+		}
+
+		visited[min_index][0] = 1; //set visited at this index to true
+		printf("min_index: %d\n", min_index);
+
+		//update path
+		for(k=0; k<h_count; k++){
+			if (h_segment_graph[min_index][k][0] && visited[k][0] == -1 && h_segment_graph[min_index][k][0] < minimum_path[k]){
+				visited[k][1] = min_index;
+				minimum_path[k] = h_segment_graph[min_index][k][0];
+			}
+		}
+	}
+
+	printMST(visited, h_count, 0);
 	return;
 }
 
@@ -216,6 +277,7 @@ void graph_vertical_segments(h_count, v_count){
 	return;
 }
 
+//generate path for horizontal segments
 void graph_horizontal_segments(h_count, v_count){
 	//you define a graph Gh with the vertical segments as vertices, and join two
 	//of these vertices by an edge if they are intersected by the same horizontal segment; the
@@ -236,13 +298,12 @@ void graph_horizontal_segments(h_count, v_count){
 				if (check_intersect(h_line_segment[i], v_line_segment[v]) == 1 && check_intersect(h_line_segment[j], v_line_segment[v]) == 1){
 					//printf("%d, %d\n", v_line_segment[i][0], horizontal_distance(v_line_segment[i], v_line_segment[j]));
 					//save distance and which horizontal segment connected to
-					h_segment_graph[i][j][0] = horizontal_distance(h_line_segment[i], h_line_segment[j]);
+					h_segment_graph[i][j][0] = vertical_distance(h_line_segment[i], h_line_segment[j]);
 					h_segment_graph[i][j][1] = v;
 					//backtracking purpose
 					h_segment_graph[j][i][0] = h_segment_graph[i][j][0];
 					h_segment_graph[j][i][1] = v;
-					//h_line_segment[i][4] = vertical_distance(h_line_segment[i], h_line_segment[j]);
-					//h_line_segment[i][5] = v;
+					//printf("%d\n", h_segment_graph[i][j][0]);
 				}
 			}
 		}
@@ -376,6 +437,7 @@ int main(int argc, char *argv[]){
 
 	light_purple_gc = XCreateGC(display, win, 0, 0);
 	XParseColor(display, colormap, light_purple, &light_purple_col);
+	XSetLineAttributes(display, light_purple_gc, 3, LineSolid, CapRound, JoinRound);
 	if (XAllocColor(display, colormap, &light_purple_col) == 0){
 		printf("Failed to get color light purple\n");
 		exit(-1);
@@ -441,10 +503,7 @@ int main(int argc, char *argv[]){
 	printf("total processed line count: %d\n", line_count);
 
 
-
-
-
-while(1){
+	while(1){
 		XNextEvent(display, &report);
 		switch(report.type){
 			case Expose:
@@ -463,6 +522,8 @@ while(1){
 					//left click
 					graph_vertical_segments(h_count, v_count);
 					vertical_MST(v_count);
+					graph_horizontal_segments(h_count, v_count);
+					horizontal_MST(h_count);
 				}
 				else{
 					printf("Closing Window.\n");
