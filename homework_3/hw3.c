@@ -53,11 +53,12 @@ int h_line_segment[200][6];
 
 
 
-double find_distance(int x1, int y1, int x2, int y2){
-	/*
-		Returns the distance between two points.
-	*/
-	return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+int horizontal_distance(int p1[], int p2[]){
+	return abs(p1[0]-p2[0]);
+}
+
+int vertical_distance(int p1[], int p2[]){
+	return abs(p1[1]-p2[1]);
 }
 
 int orientation(int ax, int ay, int bx, int by, int cx, int cy){
@@ -117,14 +118,16 @@ void graph_vertical_segments(h_count, v_count){
 	//you define a graph Gh with the horizontal segments as vertices, and join two
 	//of these vertices by an edge if they are intersected by the same vertical segment; the
 	//length of this edge is their distance along the segment.
-	int k, i, j;
+	int h, i, j;
 
 	for (i=0; i<v_count; i++){
-		for (k=0; k<h_count; k++){
+		for (h=0; h<h_count; h++){
 			for (j=i+1; j<v_count; j++){
-				//printf("%d\n", h_line_segment[k][0]);
-				if (check_intersect(v_line_segment[i], h_line_segment[k]) == 1 && check_intersect(v_line_segment[j], h_line_segment[k]) == 1){
-					printf("%d\n", v_line_segment[i][0]);
+				if (check_intersect(v_line_segment[i], h_line_segment[h]) == 1 && check_intersect(v_line_segment[j], h_line_segment[h]) == 1){
+					//printf("%d, %d\n", v_line_segment[i][0], horizontal_distance(v_line_segment[i], v_line_segment[j]));
+					//save distance and which horizontal segment connected to
+					v_line_segment[i][4] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
+					v_line_segment[i][5] = h;
 				}
 			}
 		}
@@ -296,7 +299,7 @@ int main(int argc, char *argv[]){
 
 	int h = 0;
 	int v = 0;
-	
+
 	for (i=0; i< temp_line_count; i++){
 		if (temp[i] == 104){
 			fscanf(fp, "%*s %d, %d, %d", &h_line_segment[h][1], &h_line_segment[h][0], &h_line_segment[h][2]);
