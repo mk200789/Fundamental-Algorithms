@@ -47,9 +47,12 @@ char light_purple[] = "#FFCCFF";
 
 //array holding vertical line segment
 //first 4 holds value of x1, x2, y1, y2 and last 2 holds additional information
-int v_line_segment[200][6];
+int v_line_segment[200][4];
 //array holding horizontal line segment
-int h_line_segment[200][6];
+int h_line_segment[200][4];
+//segments subgraphs v_segment_graph[][][0] holds distance and v_segment_graph[][][1] connected to
+int v_segment_graph[200][200][2]; 
+int h_segment_graph[200][200][2];
 
 
 
@@ -113,7 +116,11 @@ int check_intersect(int v[], int h[]){
 	
 }
 
-void vertical_MST(){
+void vertical_MST(v_count){
+	int i, j, k;
+	int visited[v_count][2]; //array keeping track which vertices were visited
+	int minimum_path[v_count]; //stores the minimum path
+
 	return;
 }
 
@@ -123,6 +130,14 @@ void graph_vertical_segments(h_count, v_count){
 	//of these vertices by an edge if they are intersected by the same vertical segment; the
 	//length of this edge is their distance along the segment.
 	int h, i, j;
+	
+	//set default
+	for (i=0; i<v_count; i++){
+		for(j=0; j<v_count; j++){
+			v_segment_graph[i][j][0] = 0; //distance default 0
+			v_segment_graph[i][j][0] = -1; //connection to defaults -1
+		}
+	}
 
 	for (i=0; i<v_count; i++){
 		for (h=0; h<h_count; h++){
@@ -130,8 +145,15 @@ void graph_vertical_segments(h_count, v_count){
 				if (check_intersect(v_line_segment[i], h_line_segment[h]) == 1 && check_intersect(v_line_segment[j], h_line_segment[h]) == 1){
 					//printf("%d, %d\n", v_line_segment[i][0], horizontal_distance(v_line_segment[i], v_line_segment[j]));
 					//save distance and which horizontal segment connected to
-					v_line_segment[i][4] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
-					v_line_segment[i][5] = h;
+					v_segment_graph[i][j][0] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
+					v_segment_graph[i][j][1] = h;
+
+					v_segment_graph[j][i][0] = v_segment_graph[i][j][0];
+					v_segment_graph[j][i][1] = h;
+
+					//v_line_segment[i][4] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
+					//v_line_segment[i][5] = h;
+					//printf("%d\n", v_line_segment[i][4]);
 				}
 			}
 		}
@@ -145,14 +167,27 @@ void graph_horizontal_segments(h_count, v_count){
 	//length of this edge is their distance along the segment.
 	int v, i, j;
 
+	//set default
+	for (i=0; i<v_count; i++){
+		for(j=0; j<v_count; j++){
+			h_segment_graph[i][j][0] = 0; //distance default 0
+			h_segment_graph[i][j][0] = -1; //connection to defaults -1
+		}
+	}
+
 	for (i=0; i<h_count; i++){
 		for (v=0; v<v_count; v++){
 			for (j=i+1; j<h_count; j++){
 				if (check_intersect(h_line_segment[i], v_line_segment[v]) == 1 && check_intersect(h_line_segment[j], v_line_segment[v]) == 1){
 					//printf("%d, %d\n", v_line_segment[i][0], horizontal_distance(v_line_segment[i], v_line_segment[j]));
 					//save distance and which horizontal segment connected to
-					v_line_segment[i][4] = vertical_distance(h_line_segment[i], h_line_segment[j]);
-					v_line_segment[i][5] = v;
+					h_segment_graph[i][j][0] = horizontal_distance(h_line_segment[i], h_line_segment[j]);
+					h_segment_graph[i][j][1] = v;
+					//backtracking purpose
+					h_segment_graph[j][i][0] = h_segment_graph[i][j][0];
+					h_segment_graph[i][j][1] = v;
+					//h_line_segment[i][4] = vertical_distance(h_line_segment[i], h_line_segment[j]);
+					//h_line_segment[i][5] = v;
 				}
 			}
 		}
@@ -328,22 +363,12 @@ int main(int argc, char *argv[]){
 		if (temp[i] == 104){
 			fscanf(fp, "%*s %d, %d, %d", &h_line_segment[h][1], &h_line_segment[h][0], &h_line_segment[h][2]);
 			h_line_segment[h][3] = h_line_segment[h][1];
-			//fill the additional last 2 spots with default value
-			//the 5th spot holds the distance
-			//the 6th spot holds if there's any connection to other paths
-			h_line_segment[h][4] = 0;
-			h_line_segment[h++][5] = -1;
 			h_count++;
 			line_count++;
 		}
 		if (temp[i] == 118){
 			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[v][0], &v_line_segment[v][1], &v_line_segment[v][3]);
 			v_line_segment[v][2] = v_line_segment[v][0];
-			//fill the additional last 2 spots with default value
-			//the 5th spot holds the distance
-			//the 6th spot holds if there's any connection to other paths
-			v_line_segment[v][4] = 0;
-			v_line_segment[v++][5] = -1;
 			v_count++;
 			line_count++;
 		}
@@ -354,6 +379,7 @@ int main(int argc, char *argv[]){
 
 
 	graph_vertical_segments(h_count, v_count);
+	//vertical_MST(v_count);
 
 
 /*
