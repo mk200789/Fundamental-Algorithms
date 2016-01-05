@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
 
 Display *display;
 Screen *screen;
@@ -46,7 +47,7 @@ char black[] = "#000000";
 char light_purple[] = "#FFCCFF";
 
 //array holding vertical line segment
-//first 4 holds value of x1, x2, y1, y2 and last 2 holds additional information
+//first 4 holds value of x1, x2, y1, y2
 int v_line_segment[200][4];
 //array holding horizontal line segment
 int h_line_segment[200][4];
@@ -117,10 +118,54 @@ int check_intersect(int v[], int h[]){
 }
 
 void vertical_MST(v_count){
+	//Prim's algorith: Adjacency Matrix Implementation.
 	int i, j, k;
-	int visited[v_count][2]; //array keeping track which vertices were visited
-	int minimum_path[v_count]; //stores the minimum path
+	// visited[][0] keep track of visited vertices ,
+	// visited[][1] stores only visited index for constructing our vertical MST
+	int visited[v_count][2];
+	int minimum_path[v_count]; //stores the minimum path (edge)
 
+	//default settings
+	for(i=0; i<v_count; i++){
+		//set minimum to large number
+		minimum_path[i] = 999999;
+		//set all vertices -1 , false
+		visited[i][0] = -1;
+	}
+
+	//include the first vertex in our vertical MST
+	minimum_path[0] = 0;
+	visited[0][1] = -1;
+
+	for(i=0; i< v_count-1; i++){
+		int min = 999999;
+		int min_index;
+		//finding the minimum distance
+		for(j=0; j<v_count; j++){
+			//if unvisited compare min path distance
+			if(visited[j][0] == -1 && minimum_path[j] < min){
+				//printf("swap\n");
+				min = minimum_path[j];
+				min_index = j;
+			}
+		}
+
+		visited[min_index][0] = 1; //set visited at this index to true
+		//printf("min_index: %d\n", min_index);
+
+		//update path
+		for(k=0; k<v_count; k++){
+			if (v_segment_graph[min_index][k][0] && visited[k][0] == -1 && v_segment_graph[min_index][k][0] < minimum_path[k]){
+				visited[k][1] = min_index;
+				minimum_path[k] = v_segment_graph[min_index][k][0];
+			}
+		}
+	}
+/*
+	for (i=0; i<v_count;i++){
+		printf("%d\n", visited[i][1]);
+	}
+*/
 	return;
 }
 
@@ -135,7 +180,7 @@ void graph_vertical_segments(h_count, v_count){
 	for (i=0; i<v_count; i++){
 		for(j=0; j<v_count; j++){
 			v_segment_graph[i][j][0] = 0; //distance default 0
-			v_segment_graph[i][j][0] = -1; //connection to defaults -1
+			v_segment_graph[i][j][1] = -1; //connection to defaults -1
 		}
 	}
 
@@ -148,12 +193,10 @@ void graph_vertical_segments(h_count, v_count){
 					v_segment_graph[i][j][0] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
 					v_segment_graph[i][j][1] = h;
 
-					v_segment_graph[j][i][0] = v_segment_graph[i][j][0];
+					v_segment_graph[j][i][0] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
 					v_segment_graph[j][i][1] = h;
 
-					//v_line_segment[i][4] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
-					//v_line_segment[i][5] = h;
-					//printf("%d\n", v_line_segment[i][4]);
+					//printf("%d\n", v_segment_graph[i][j][0]);
 				}
 			}
 		}
@@ -168,10 +211,10 @@ void graph_horizontal_segments(h_count, v_count){
 	int v, i, j;
 
 	//set default
-	for (i=0; i<v_count; i++){
-		for(j=0; j<v_count; j++){
+	for (i=0; i<h_count; i++){
+		for(j=0; j<h_count; j++){
 			h_segment_graph[i][j][0] = 0; //distance default 0
-			h_segment_graph[i][j][0] = -1; //connection to defaults -1
+			h_segment_graph[i][j][1] = -1; //connection to defaults -1
 		}
 	}
 
@@ -185,7 +228,7 @@ void graph_horizontal_segments(h_count, v_count){
 					h_segment_graph[i][j][1] = v;
 					//backtracking purpose
 					h_segment_graph[j][i][0] = h_segment_graph[i][j][0];
-					h_segment_graph[i][j][1] = v;
+					h_segment_graph[j][i][1] = v;
 					//h_line_segment[i][4] = vertical_distance(h_line_segment[i], h_line_segment[j]);
 					//h_line_segment[i][5] = v;
 				}
@@ -356,19 +399,16 @@ int main(int argc, char *argv[]){
 	}
 	rewind(fp);
 
-	int h = 0;
-	int v = 0;
-
 	for (i=0; i< temp_line_count; i++){
 		if (temp[i] == 104){
-			fscanf(fp, "%*s %d, %d, %d", &h_line_segment[h][1], &h_line_segment[h][0], &h_line_segment[h][2]);
-			h_line_segment[h][3] = h_line_segment[h][1];
+			fscanf(fp, "%*s %d, %d, %d", &h_line_segment[h_count][1], &h_line_segment[h_count][0], &h_line_segment[h_count][2]);
+			h_line_segment[h_count][3] = h_line_segment[h_count][1];
 			h_count++;
 			line_count++;
 		}
 		if (temp[i] == 118){
-			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[v][0], &v_line_segment[v][1], &v_line_segment[v][3]);
-			v_line_segment[v][2] = v_line_segment[v][0];
+			fscanf(fp, "%*s %d, %d, %d", &v_line_segment[v_count][0], &v_line_segment[v_count][1], &v_line_segment[v_count][3]);
+			v_line_segment[v_count][2] = v_line_segment[v_count][0];
 			v_count++;
 			line_count++;
 		}
@@ -377,9 +417,8 @@ int main(int argc, char *argv[]){
 
 	printf("total processed line count: %d\n", line_count);
 
-
 	graph_vertical_segments(h_count, v_count);
-	//vertical_MST(v_count);
+	vertical_MST(v_count);
 
 
 /*
