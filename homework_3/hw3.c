@@ -29,8 +29,8 @@ XWMHints *wm_hints;
 XClassHint *class_hints;
 XSizeHints *size_hints;
 XTextProperty win_name, icon_name;
-char *win_name_string = "Homework 2";
-char *icon_name_string = "Icon for homework 2 window";
+char *win_name_string = "Homework 3";
+char *icon_name_string = "Icon for homework 3 window";
 unsigned long valuemask = 0;
 
 XEvent report;
@@ -61,7 +61,7 @@ int graph[400][400];
 //keep track of intersections
 int count_intersection;
 
-int total_h, total_v; total;
+int total_h, total_v, total;
 
 
 
@@ -135,6 +135,7 @@ void printMST(int visited[][2], int count, int who){
 	        //printf("x1: %d, y1: %d\n", v_line_segment[visited[i][1]][0], h_line_segment[distance][1]);
 	        //printf("x2: %d, y2: %d\n", v_line_segment[i][0], h_line_segment[distance][1]);
 			XDrawLine(display, win, blue_gc, v_line_segment[visited[i][1]][0], h_line_segment[distance][1],v_line_segment[i][0], h_line_segment[distance][1]);
+			total_v += v_segment_graph[i][visited[i][1]][0];
 
 		}
 	}
@@ -145,6 +146,7 @@ void printMST(int visited[][2], int count, int who){
 			XDrawLine(display, win, green_gc, 
 				v_line_segment[distance][0], h_line_segment[i][1],
 				v_line_segment[distance][0], h_line_segment[visited[i][1]][1]);
+			total_h += h_segment_graph[i][visited[i][1]][0];
 		}
 	}
 	else if (who == 2){
@@ -154,6 +156,7 @@ void printMST(int visited[][2], int count, int who){
 			XDrawLine(display, win, red_gc, 
 				intersections_point[i][0], intersections_point[i][1],
 				intersections_point[visited[i][1]][0], intersections_point[visited[i][1]][1]);
+			total += distance;
 		}
 	}
 	return;
@@ -454,6 +457,8 @@ void graph_MST(){
 	return;
 }
 
+
+
 int main(int argc, char *argv[]){
 	FILE *fp;
 	char c;
@@ -461,9 +466,10 @@ int main(int argc, char *argv[]){
 	int line_count = 0; //holds the actual lines that aren't empty
 	int h_count = 0;
 	int v_count = 0;
+	int count=0;
 	count_intersection = 0;
 	total_h = 0;
-	tota_v = 0;
+	total_v = 0;
 	total = 0;
 
 	fp = fopen(argv[1], "r");
@@ -620,9 +626,6 @@ int main(int argc, char *argv[]){
 
 
 
-
-
-
 	printf("total raw line count: %d\n", temp_line_count);
 	int i;
 	//stores variable v or h
@@ -678,13 +681,21 @@ int main(int argc, char *argv[]){
 			case ButtonPress:
 			{
 				if (report.xbutton.button == Button1){
-					//left click
-					graph_vertical_segments(h_count, v_count);
-					vertical_MST(v_count);
-					graph_horizontal_segments(h_count, v_count);
-					horizontal_MST(h_count);
-					graph_segments(h_count, v_count);
-					graph_MST();
+					if (count == 0){
+						//left click
+						graph_vertical_segments(h_count, v_count);
+						vertical_MST(v_count);
+						graph_horizontal_segments(h_count, v_count);
+						horizontal_MST(h_count);
+						graph_segments(h_count, v_count);
+						graph_MST();
+						printf("total_v: %d\n", total_v);
+						printf("total_h: %d\n", total_h);
+						printf("solutions lower bound: %d\n", total_v+total_h);
+						printf("total: %d\n", total);
+						printf("ration on screen: %f\n", (double)total/(total_v+total_h));
+					}
+					count++;
 				}
 				else{
 					printf("Closing Window.\n");
