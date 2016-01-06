@@ -35,24 +35,33 @@ unsigned long valuemask = 0;
 
 XEvent report;
 
-GC gc, green_gc, red_gc, black_gc, light_purple_gc, white_gc;
-XColor green_col, red_col, black_col, light_purple_col, white_col;
+GC gc, green_gc, red_gc, black_gc, light_purple_gc, white_gc, blue_gc;
+XColor green_col, red_col, black_col, light_purple_col, white_col, blue_col;
 Colormap colormap;
 
 char white[] = "#FFFFFF";
-char green[] = "#00FF00";
-char red[] = "#A80000";
+char green[] = "#1F8728";
+char red[] = "#FF3333";
 char black[] = "#000000";
 char light_purple[] = "#FFCCFF";
+char blue[] = "#0000FF";
 
-//array holding vertical line segment
+//array holding vertical/horizontal line segment
 //first 4 holds value of x1, x2, y1, y2
 int v_line_segment[200][4];
-//array holding horizontal line segment
 int h_line_segment[200][4];
-//segments subgraphs v_segment_graph[][][0] holds distance and v_segment_graph[][][1] connected to
+//segments subgraphs v_segment_graph[][][0] holds distance 
+//and v_segment_graph[][][1] connected to
 int v_segment_graph[200][200][2]; 
 int h_segment_graph[200][200][2];
+//holds intersecting lines
+int intersections[200][200][3];
+int intersections_point[200][2];
+int graph[400][400];
+//keep track of intersections
+int count_intersection;
+
+int total_h, total_v; total;
 
 
 
@@ -120,11 +129,12 @@ void printMST(int visited[][2], int count, int who){
 	//who: 1 is for vertical , 0 is for horizontal
 	int i, distance;
 	if (who == 1){
+		//vertical
 		for (i=1; i< count; i++){
 			distance = v_segment_graph[i][visited[i][1]][1];
 	        //printf("x1: %d, y1: %d\n", v_line_segment[visited[i][1]][0], h_line_segment[distance][1]);
 	        //printf("x2: %d, y2: %d\n", v_line_segment[i][0], h_line_segment[distance][1]);
-			XDrawLine(display, win, red_gc, v_line_segment[visited[i][1]][0], h_line_segment[distance][1],v_line_segment[i][0], h_line_segment[distance][1]);
+			XDrawLine(display, win, blue_gc, v_line_segment[visited[i][1]][0], h_line_segment[distance][1],v_line_segment[i][0], h_line_segment[distance][1]);
 
 		}
 	}
@@ -132,9 +142,18 @@ void printMST(int visited[][2], int count, int who){
 		//horizontal
 		for (i=1; i<count; i++){
 			distance = h_segment_graph[i][visited[i][1]][1];
-			XDrawLine(display, win, light_purple_gc, 
+			XDrawLine(display, win, green_gc, 
 				v_line_segment[distance][0], h_line_segment[i][1],
 				v_line_segment[distance][0], h_line_segment[visited[i][1]][1]);
+		}
+	}
+	else if (who == 2){
+		//uniting
+		for (i=1; i<count; i++){
+			distance = graph[i][visited[i][1]];
+			XDrawLine(display, win, red_gc, 
+				intersections_point[i][0], intersections_point[i][1],
+				intersections_point[visited[i][1]][0], intersections_point[visited[i][1]][1]);
 		}
 	}
 	return;
@@ -227,7 +246,7 @@ void horizontal_MST(int h_count){
 		}
 
 		visited[min_index][0] = 1; //set visited at this index to true
-		printf("min_index: %d\n", min_index);
+		//printf("min_index: %d\n", min_index);
 
 		//update path
 		for(k=0; k<h_count; k++){
@@ -243,7 +262,7 @@ void horizontal_MST(int h_count){
 }
 
 //generate path for vertical segments
-void graph_vertical_segments(h_count, v_count){
+void graph_vertical_segments(int h_count, int v_count){
 	//you define a graph Gh with the horizontal segments as vertices, and join two
 	//of these vertices by an edge if they are intersected by the same vertical segment; the
 	//length of this edge is their distance along the segment.
@@ -278,7 +297,7 @@ void graph_vertical_segments(h_count, v_count){
 }
 
 //generate path for horizontal segments
-void graph_horizontal_segments(h_count, v_count){
+void graph_horizontal_segments(int h_count, int v_count){
 	//you define a graph Gh with the vertical segments as vertices, and join two
 	//of these vertices by an edge if they are intersected by the same horizontal segment; the
 	//length of this edge is their distance along the segment.
@@ -310,7 +329,130 @@ void graph_horizontal_segments(h_count, v_count){
 	}
 	return;
 }
+void graph_segments(int h_count, int v_count){
+	int i, j, k;
 
+	//set default values for intersections[]
+	for (i=0; i<v_count; i++){
+		for(j=0; j<h_count; j++){
+			intersections[i][j][0] = -1; //x value
+			intersections[i][j][1] = -1; //y value
+			intersections[i][j][2] = -1; //index value
+		}
+	}
+
+	for (i=0; i<h_count; i++){
+		for(j=0; j<v_count; j++){
+			//if line intersects, store in intersections[]
+			if (check_intersect(h_line_segment[i], v_line_segment[j]) == 1){
+				printf("intersect: (%d, %d) and (%d, %d) WITH (%d, %d) and(%d, %d)\n", 
+					h_line_segment[i][0], h_line_segment[i][1],h_line_segment[i][2], h_line_segment[i][3],
+					v_line_segment[j][0], v_line_segment[j][1],v_line_segment[j][2], v_line_segment[j][3]);
+				
+				intersections[i][j][0] = v_line_segment[j][0];
+				intersections[i][j][1] = h_line_segment[i][1];
+				intersections[i][j][2] = count_intersection;
+
+				intersections_point[count_intersection][0] = intersections[i][j][0];
+				intersections_point[count_intersection][1] = intersections[i][j][1];
+
+
+				printf("%d, %d, %d\n", intersections[i][j][0], intersections[i][j][1], intersections[i][j][2]);
+				count_intersection++;
+			}
+		}
+	}
+	int temp_i, temp_j;
+
+	//vertical connected intersections
+	for (i=0; i<v_count; i++){
+		for (j=0; j<h_count; j++){
+			for(k=j+1; k<h_count; k++){
+				if(intersections[j][i][0] != -1 && intersections[k][i][0] != -1){
+					temp_i = intersections[j][i][2];
+					temp_j = intersections[k][i][2];
+
+					graph[temp_i][temp_j] = vertical_distance(intersections[j][i], intersections[k][i]);
+					graph[temp_j][temp_i] = graph[temp_i][temp_j];
+
+				}
+			}
+		}
+	}
+
+	//horizontal connected intersections
+	for (i=0; i<h_count; i++){
+		for (j=0; j<v_count; j++){
+			for(k=j+1; k<v_count; k++){
+				if(intersections[i][j][0] != -1 && intersections[i][k][0] != -1){
+					temp_i = intersections[i][j][2];
+					temp_j = intersections[i][k][2];
+
+					graph[temp_i][temp_j] = horizontal_distance(intersections[i][j], intersections[i][k]);
+					graph[temp_j][temp_i] = graph[temp_i][temp_j];
+					//printf("distance: %d\n", horizontal_distance(intersections[i][j], intersections[i][k]));
+					//printf("temp_i, temp_j: %d %d\n", temp_i, temp_j);
+					//printf("%d, %d __ %d, %d\n", intersections[i][j][0], intersections[i][j][1], intersections[i][k][0], intersections[i][k][1]);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+void graph_MST(){
+	//Prim's algorith: Adjacency Matrix Implementation.
+	int i, j, k;
+	// visited[][0] keep track of visited vertices ,
+	// visited[][1] stores only visited index for constructing our vertical MST
+	int visited[count_intersection][2];
+	int minimum_path[count_intersection]; //stores the minimum path (edge)
+
+	//default settings
+	for(i=0; i<count_intersection; i++){
+		//set minimum to large number
+		minimum_path[i] = 999999;
+		//set all vertices -1 , false
+		visited[i][0] = -1;
+	}
+
+	//include the first vertex in our vertical MST
+	minimum_path[0] = 0;
+	visited[0][1] = -1;
+
+	for(i=0; i<count_intersection-1; i++){
+		int min = 999999;
+		int min_index;
+		//finding the minimum distance
+		for(j=0; j<count_intersection; j++){
+			//if unvisited compare min path distance
+			if(visited[j][0] == -1 && minimum_path[j] < min){
+				//printf("swap\n");
+				min = minimum_path[j];
+				min_index = j;
+			}
+		}
+
+		visited[min_index][0] = 1; //set visited at this index to true
+		//printf("min_index: %d\n", min_index);
+
+		//update path
+		for(k=0; k<count_intersection; k++){
+			if (graph[min_index][k] && visited[k][0] == -1 && graph[min_index][k] < minimum_path[k]){
+				//printf("hheya: %d\n", graph[min_index][k]);
+				visited[k][1] = min_index;
+				minimum_path[k] = graph[min_index][k];
+			}
+		}
+	}
+
+	printf("tot:%d\n", count_intersection);
+
+	printMST(visited, count_intersection, 2);
+
+	return;
+}
 
 int main(int argc, char *argv[]){
 	FILE *fp;
@@ -319,6 +461,10 @@ int main(int argc, char *argv[]){
 	int line_count = 0; //holds the actual lines that aren't empty
 	int h_count = 0;
 	int v_count = 0;
+	count_intersection = 0;
+	total_h = 0;
+	tota_v = 0;
+	total = 0;
 
 	fp = fopen(argv[1], "r");
 
@@ -400,6 +546,7 @@ int main(int argc, char *argv[]){
 	//graphics setup
 	green_gc = XCreateGC(display, win, 0, 0);
 	XParseColor(display, colormap, green, &green_col);
+	XSetLineAttributes(display, green_gc, 4, LineSolid, CapRound, JoinRound);
 	if (XAllocColor(display, colormap, &green_col) == 0){
 		printf("Failed to get color green\n");
 		exit(-1);
@@ -412,7 +559,7 @@ int main(int argc, char *argv[]){
 
 	red_gc = XCreateGC(display, win, 0, 0);
 	XParseColor(display, colormap, red, &red_col);
-	XSetLineAttributes(display, red_gc, 3, LineSolid, CapRound, JoinRound);
+	XSetLineAttributes(display, red_gc, 2, LineSolid, CapRound, JoinRound);
 	if (XAllocColor(display, colormap, &red_col) == 0){
 		//printf("Failed to get color red\n");
 		exit(-1);
@@ -457,6 +604,18 @@ int main(int argc, char *argv[]){
 	else{
 		//printf("Success white!\n");
 		XSetForeground(display, white_gc, white_col.pixel);	
+	}
+
+	blue_gc = XCreateGC(display, win, 0, 0);
+	XParseColor(display, colormap, blue, &blue_col);	
+	XSetLineAttributes(display, blue_gc, 4, LineSolid, CapRound, JoinRound);
+	if (XAllocColor(display, colormap, &blue_col) == 0){
+		printf("Failed to get color blue\n");
+		exit(-1);
+	}
+	else{
+		//printf("Success white!\n");
+		XSetForeground(display, blue_gc, blue_col.pixel);	
 	}
 
 
@@ -510,7 +669,7 @@ int main(int argc, char *argv[]){
 			{	
 				for (i = 0; i <line_count; i++){
 					//Draw the line segments
-					XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[i][2], m[i][3]);
+					XDrawLine(display, win, black_gc, m[i][0], m[i][1], m[i][2], m[i][3]);
 				}
 
 				XFlush(display);
@@ -524,6 +683,8 @@ int main(int argc, char *argv[]){
 					vertical_MST(v_count);
 					graph_horizontal_segments(h_count, v_count);
 					horizontal_MST(h_count);
+					graph_segments(h_count, v_count);
+					graph_MST();
 				}
 				else{
 					printf("Closing Window.\n");
