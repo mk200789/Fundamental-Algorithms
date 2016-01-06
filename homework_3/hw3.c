@@ -35,15 +35,13 @@ unsigned long valuemask = 0;
 
 XEvent report;
 
-GC gc, green_gc, red_gc, black_gc, light_purple_gc, white_gc, blue_gc;
-XColor green_col, red_col, black_col, light_purple_col, white_col, blue_col;
+GC gc, green_gc, red_gc, black_gc, blue_gc;
+XColor green_col, red_col, black_col, blue_col;
 Colormap colormap;
 
-char white[] = "#FFFFFF";
 char green[] = "#1F8728";
 char red[] = "#FF3333";
 char black[] = "#000000";
-char light_purple[] = "#FFCCFF";
 char blue[] = "#0000FF";
 
 //array holding vertical/horizontal line segment
@@ -113,7 +111,6 @@ int check_intersect(int v[], int h[]){
 	int ABT = orientation(v[0], v[1], v[2], v[3], h[2], h[3]);
 	int STA = orientation(h[0], h[1], h[2], h[3], v[0], v[1]);
 	int STB = orientation(h[0], h[1], h[2], h[3], v[2], v[3]);
-	//printf("ABS*ABT: %d. STA*STB: %d\n", ABS*ABT, STA*STB);
 	if (isSame_segment(v[0], v[1], h[0], h[1]) == 1 && isSame_segment(v[2], v[3], h[2], h[3]) == 1){
 		return 1;
 	}
@@ -196,7 +193,6 @@ void vertical_MST(int v_count){
 		}
 
 		visited[min_index][0] = 1; //set visited at this index to true
-		//printf("min_index: %d\n", min_index);
 
 		//update path
 		for(k=0; k<v_count; k++){
@@ -206,11 +202,7 @@ void vertical_MST(int v_count){
 			}
 		}
 	}
-/*
-	for (i=0; i<v_count;i++){
-		printf("%d\n", visited[i][1]);
-	}
-*/
+
 	printMST(visited, v_count, 1);
 	return;
 }
@@ -242,14 +234,12 @@ void horizontal_MST(int h_count){
 		for(j=0; j<h_count; j++){
 			//if unvisited compare min path distance
 			if(visited[j][0] == -1 && minimum_path[j] < min){
-				//printf("swap\n");
 				min = minimum_path[j];
 				min_index = j;
 			}
 		}
 
 		visited[min_index][0] = 1; //set visited at this index to true
-		//printf("min_index: %d\n", min_index);
 
 		//update path
 		for(k=0; k<h_count; k++){
@@ -288,10 +278,8 @@ void graph_vertical_segments(int h_count, int v_count){
 					v_segment_graph[i][j][0] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
 					v_segment_graph[i][j][1] = h;
 
-					v_segment_graph[j][i][0] = horizontal_distance(v_line_segment[i], v_line_segment[j]);
+					v_segment_graph[j][i][0] = v_segment_graph[i][j][0];
 					v_segment_graph[j][i][1] = h;
-
-					//printf("%d\n", v_segment_graph[i][j][0]);
 				}
 			}
 		}
@@ -318,14 +306,12 @@ void graph_horizontal_segments(int h_count, int v_count){
 		for (v=0; v<v_count; v++){
 			for (j=i+1; j<h_count; j++){
 				if (check_intersect(h_line_segment[i], v_line_segment[v]) == 1 && check_intersect(h_line_segment[j], v_line_segment[v]) == 1){
-					//printf("%d, %d\n", v_line_segment[i][0], horizontal_distance(v_line_segment[i], v_line_segment[j]));
 					//save distance and which horizontal segment connected to
 					h_segment_graph[i][j][0] = vertical_distance(h_line_segment[i], h_line_segment[j]);
 					h_segment_graph[i][j][1] = v;
 					//backtracking purpose
 					h_segment_graph[j][i][0] = h_segment_graph[i][j][0];
 					h_segment_graph[j][i][1] = v;
-					//printf("%d\n", h_segment_graph[i][j][0]);
 				}
 			}
 		}
@@ -348,9 +334,6 @@ void graph_segments(int h_count, int v_count){
 		for(j=0; j<v_count; j++){
 			//if line intersects, store in intersections[]
 			if (check_intersect(h_line_segment[i], v_line_segment[j]) == 1){
-				printf("intersect: (%d, %d) and (%d, %d) WITH (%d, %d) and(%d, %d)\n", 
-					h_line_segment[i][0], h_line_segment[i][1],h_line_segment[i][2], h_line_segment[i][3],
-					v_line_segment[j][0], v_line_segment[j][1],v_line_segment[j][2], v_line_segment[j][3]);
 				
 				intersections[i][j][0] = v_line_segment[j][0];
 				intersections[i][j][1] = h_line_segment[i][1];
@@ -358,9 +341,7 @@ void graph_segments(int h_count, int v_count){
 
 				intersections_point[count_intersection][0] = intersections[i][j][0];
 				intersections_point[count_intersection][1] = intersections[i][j][1];
-
-
-				printf("%d, %d, %d\n", intersections[i][j][0], intersections[i][j][1], intersections[i][j][2]);
+				
 				count_intersection++;
 			}
 		}
@@ -377,7 +358,6 @@ void graph_segments(int h_count, int v_count){
 
 					graph[temp_i][temp_j] = vertical_distance(intersections[j][i], intersections[k][i]);
 					graph[temp_j][temp_i] = graph[temp_i][temp_j];
-
 				}
 			}
 		}
@@ -393,9 +373,6 @@ void graph_segments(int h_count, int v_count){
 
 					graph[temp_i][temp_j] = horizontal_distance(intersections[i][j], intersections[i][k]);
 					graph[temp_j][temp_i] = graph[temp_i][temp_j];
-					//printf("distance: %d\n", horizontal_distance(intersections[i][j], intersections[i][k]));
-					//printf("temp_i, temp_j: %d %d\n", temp_i, temp_j);
-					//printf("%d, %d __ %d, %d\n", intersections[i][j][0], intersections[i][j][1], intersections[i][k][0], intersections[i][k][1]);
 				}
 			}
 		}
@@ -450,8 +427,6 @@ void graph_MST(){
 		}
 	}
 
-	printf("tot:%d\n", count_intersection);
-
 	printMST(visited, count_intersection, 2);
 
 	return;
@@ -503,7 +478,6 @@ int main(int argc, char *argv[]){
 		rewind(fp);
 	}
 
-
 	//Creating window
 	border_width = 10;
 	win_x = 0; win_y = 0;
@@ -540,7 +514,7 @@ int main(int argc, char *argv[]){
 	wm_hints -> input = False;
 
 	class_hints -> res_name = "x_use_example";
-	class_hints -> res_class = "homework2";
+	class_hints -> res_class = "homework3";
 	
 	XSetWMProperties(display, win, &win_name, &icon_name, argv, argc, size_hints, wm_hints, class_hints );
 	XSelectInput(display, win, ExposureMask | KeyPressMask | ButtonPressMask);
@@ -558,7 +532,6 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 	else{
-		//printf("Success green!\n");
 		XSetForeground(display, green_gc, green_col.pixel);
 
 	}
@@ -583,33 +556,7 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 	else{
-		//printf("Success black!\n");
 		XSetForeground(display, black_gc, black_col.pixel);
-	}
-
-
-	light_purple_gc = XCreateGC(display, win, 0, 0);
-	XParseColor(display, colormap, light_purple, &light_purple_col);
-	XSetLineAttributes(display, light_purple_gc, 3, LineSolid, CapRound, JoinRound);
-	if (XAllocColor(display, colormap, &light_purple_col) == 0){
-		printf("Failed to get color light purple\n");
-		exit(-1);
-	}
-	else{
-		//printf("Success light purple!\n");
-		XSetForeground(display, light_purple_gc, light_purple_col.pixel);
-	}
-
-
-	white_gc = XCreateGC(display, win, 0, 0);
-	XParseColor(display, colormap, white, &white_col);	
-	if (XAllocColor(display, colormap, &white_col) == 0){
-		printf("Failed to get color white\n");
-		exit(-1);
-	}
-	else{
-		//printf("Success white!\n");
-		XSetForeground(display, white_gc, white_col.pixel);	
 	}
 
 	blue_gc = XCreateGC(display, win, 0, 0);
@@ -620,7 +567,6 @@ int main(int argc, char *argv[]){
 		exit(-1);
 	}
 	else{
-		//printf("Success white!\n");
 		XSetForeground(display, blue_gc, blue_col.pixel);	
 	}
 
