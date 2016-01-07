@@ -1,6 +1,7 @@
 /* 
-	Compiles with command line  gcc -o assign1 hw1.c -lX11 -lm -L/usr/X11R6/lib 
-	Run : ./assign input.txt
+	Compiles with command line  gcc -o assign1 hw1.c -lX11 -lm -L/usr/X11R6/lib
+	Note: Make sure your input file does not have an empty line, or else error will occur. 
+	Run : ./assign test_in
 	Homework #1
 	Wan Kim Mok
 	Due: September 30, 2015
@@ -19,13 +20,31 @@ typedef int bool;
 #define false 0
 
 Display *display;
+Screen *screen;
+unsigned int display_width, display_height;
 Window win;
-GC green_gc, red_gc, black_gc, light_purple_gc;
+unsigned int win_width, win_height;
+char *display_name = NULL;
+int screen_name;
+int screen_num;
+int border_width;
+int win_x, win_y;
+
+XWMHints *wm_hints;
+XClassHint *class_hints;
+XSizeHints *size_hints;
+XTextProperty win_name, icon_name;
+char *win_name_string = "Homework 1";
+char *icon_name_string = "Icon for homework 1 window";
+unsigned long valuemask = 0;
+
 XEvent report;
-XColor green_col, red_col, black_col, light_purple_col;
+
+GC gc, green_gc, red_gc, black_gc, light_purple_gc, white_gc;
+XColor green_col, red_col, black_col, light_purple_col, white_col;
 Colormap colormap;
 
-unsigned int win_width, win_height;
+
 
 //store the x,y values of target and start point
 unsigned int start_x, start_y , target_x, target_y;
@@ -37,14 +56,43 @@ long ABS, ABT, STA, STB;
 int PAB, PBC, PAC, CAB, BAC, ABC;
 
 //vertices that will be used for dijkstra
-double valid_vertex[200][7];
+double valid_vertex[600][7];
 int k;
 
+char white[] = "#FFFFFF";
 char green[] = "#00FF00";
 char red[] = "#A80000";
 char black[] = "#000000";
 char light_purple[] = "#FFCCFF";
 
+
+void reset(int m[][6], int line_count){
+	int i, j;
+
+	for (i= 0; i<k; i++){
+		if  (valid_vertex[i][6] == 0.0 || valid_vertex[i][6] == -4.0){
+			printf("from (%d, %d) to (%d, %d) length: %f and path length: %f\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5]);
+			XDrawLine(display, win, white_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
+		}
+	}
+
+	XFillArc( display, win, white_gc, start_x, start_y, win_width/200, win_width/200, 0, 360*64);
+	XFillArc( display, win, white_gc, target_x, target_y, win_width/200, win_width/200, 0, 360*64);
+
+	for(i=0; i<k; i++){
+		for (j=0; j<7; j++){
+			valid_vertex[i][j] = 0.0;
+		}
+	}
+	k=0;
+
+	for (i = 0; i <=line_count; i++){
+		//Draw the triangles
+		XDrawLine(display, win, green_gc, m[i][0], m[i][1], m[i][2], m[i][3]);
+		XDrawLine(display, win, green_gc, m[i][2], m[i][3], m[i][4], m[i][5]);
+		XDrawLine(display, win, green_gc, m[i][4], m[i][5], m[i][0], m[i][1]);
+	}
+}
 
 int orientation(int ax, int ay, int bx, int by, int cx, int cy){
 	return (ax*by) + (bx*cy) + (cx*ay) - (ay*bx) - (by*cx) - (cy*ax);
@@ -221,6 +269,18 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 
 	int i, j;
 
+
+	//initialize valid_vertex[][] to zero
+	for (i=0; i<600; i++){
+		valid_vertex[i][0] = 0.0;
+		valid_vertex[i][1] = 0.0;
+		valid_vertex[i][2] = 0.0;
+		valid_vertex[i][3] = 0.0;
+		valid_vertex[i][4] = 0.0;
+		valid_vertex[i][5] = 0.0;
+		valid_vertex[i][6] = 0.0;
+	}
+
 	//store the start point in valid_vertex 
 	valid_vertex[k][0] = start_x;	// from x value
 	valid_vertex[k][1] = start_y;   // from y value
@@ -229,6 +289,7 @@ void start_graph(int line_count, int vertex[][6], int start_x, int start_y, int 
 	valid_vertex[k][4] = 0.0;		// distance from point a to b
 	valid_vertex[k][5] = 0.0;		// total distance
 	valid_vertex[k++][6] = 0.0;		// -2.0 target , 1.0 has visited not included, 0.0 using, -1.0 not yet visited
+
 
 
 	//handles the lines connecting from the starting point and branch out
@@ -504,17 +565,14 @@ void organize(){
 
 
 int main(int argc, char *argv[]){
-	display = XOpenDisplay(NULL);
-	win_height = 700;
-	win_width = 700;
-	count = -1;
-	count_intersect = 0;
-	k = 0;
-
 	FILE *fp;
 	char buff[1000];
 	int ch, i, j, x, y;
 	int line_count = 0;
+
+	count = -1;
+	count_intersect = 0;
+	k = 0;
 	
 	fp = fopen(argv[1], "r");
 
@@ -523,6 +581,18 @@ int main(int argc, char *argv[]){
 		exit(0);
 	}
 	else{
+		if( (display = XOpenDisplay(display_name)) == NULL ){ 
+			printf("Could not open display. \n"); 
+			exit(-1);
+		}
+		printf("Connected to X server  %s\n", XDisplayName(display_name) );
+		
+		screen_num = DefaultScreen(display);
+		screen = DefaultScreenOfDisplay(display);
+		colormap = XDefaultColormap(display, screen_num);
+		display_width = DisplayWidth(display, screen_num);
+		display_height = DisplayHeight(display, screen_num);
+
 		//obtaining line count
 		while(!feof(fp)){
 			ch = fgetc(fp);
@@ -537,33 +607,111 @@ int main(int argc, char *argv[]){
 	int m[line_count+1][6];
 
 	//Creating window
-	win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, win_width, win_height, 10, WhitePixel (display, 0), WhitePixel (display, 0));
+	border_width = 10;
+	win_x = 0; win_y = 0;
+	win_width = display_width/2;
+	win_height = display_height * 0.8;
+	//win_height = (int)(win_width/1.7); //rectangular window
+
+	printf("window width: %d\n window height: %d\n", display_width, display_height);
+
+	//win = XCreateSimpleWindow(display, RootWindow(display, 0), 1, 1, win_width, win_height, 10, WhitePixel (display, 0), WhitePixel (display, 0));
+	win = XCreateSimpleWindow(display, RootWindow(display, screen_num), 
+		win_x, win_y, win_width, win_height, border_width,
+		BlackPixel(display, screen_num), WhitePixel(display, screen_num));
 	
+
 	//Maps window on screen
-	XMapWindow(display, win);
+	size_hints = XAllocSizeHints();
+	wm_hints = XAllocWMHints();
+	class_hints = XAllocClassHint();
+	if (size_hints == NULL || wm_hints == NULL || class_hints == NULL){
+		printf("Error allocating memory for hints\n");
+		exit(-1);
+	}
 
-	colormap = DefaultColormap(display, 0);
-	green_gc = XCreateGC(display, win, 0, 0);
-	red_gc = XCreateGC(display, win, 0, 0);
-	black_gc = XCreateGC(display, win, 0, 0);
-	light_purple_gc = XCreateGC(display, win, 0, 0);
-	XParseColor(display, colormap, green, &green_col);
-	XParseColor(display, colormap, red, &red_col);
-	XParseColor(display, colormap, black, &black_col);
-	XParseColor(display, colormap, light_purple, &light_purple_col);
-	XAllocColor(display, colormap, &green_col);
-	XAllocColor(display, colormap, &red_col);
-	XAllocColor(display, colormap, &black_col);
-	XAllocColor(display, colormap, &light_purple_col);
-	XSetForeground(display, green_gc, green_col.pixel);
-	XSetForeground(display, red_gc, red_col.pixel);
-	XSetForeground(display, black_gc, black_col.pixel);
-	XSetForeground(display, light_purple_gc, light_purple_col.pixel);
+	size_hints -> flags = PPosition | PSize | PMinSize;
+	size_hints -> min_width = 60;
+	size_hints -> min_height = 60;
 
+	XStringListToTextProperty(&win_name_string, 1, &win_name);
+	XStringListToTextProperty(&icon_name_string, 1, &icon_name);
+
+	wm_hints -> flags = StateHint | InputHint;
+	wm_hints -> initial_state = NormalState;
+	wm_hints -> input = False;
+
+	class_hints -> res_name = "x_use_example";
+	class_hints -> res_class = "homework1";
+	
+	XSetWMProperties(display, win, &win_name, &icon_name, argv, argc, size_hints, wm_hints, class_hints );
 	XSelectInput(display, win, ExposureMask | KeyPressMask | ButtonPressMask);
 
-
+	// put on screen
+	XMapWindow(display, win);
 	XFlush(display);
+
+	//graphics setup
+	green_gc = XCreateGC(display, win, 0, 0);
+	XParseColor(display, colormap, green, &green_col);
+	if (XAllocColor(display, colormap, &green_col) == 0){
+		printf("Failed to get color green\n");
+		exit(-1);
+	}
+	else{
+		printf("Success green!\n");
+		XSetForeground(display, green_gc, green_col.pixel);
+
+	}
+
+	red_gc = XCreateGC(display, win, 0, 0);
+	XParseColor(display, colormap, red, &red_col);
+	if (XAllocColor(display, colormap, &red_col) == 0){
+		printf("Failed to get color red\n");
+		exit(-1);
+	}
+	else{
+		printf("Success red!\n");
+		XSetForeground(display, red_gc, red_col.pixel);
+	}
+
+
+	black_gc = XCreateGC(display, win, 0, 0);
+	XParseColor(display, colormap, black, &black_col);
+	if (XAllocColor(display, colormap, &black_col) == 0){
+		printf("Failed to get color black\n");
+		exit(-1);
+	}
+	else{
+		printf("Success black!\n");
+		XSetForeground(display, black_gc, black_col.pixel);
+	}
+
+
+	light_purple_gc = XCreateGC(display, win, 0, 0);
+	XParseColor(display, colormap, light_purple, &light_purple_col);
+	if (XAllocColor(display, colormap, &light_purple_col) == 0){
+		printf("Failed to get color light purple\n");
+		exit(-1);
+	}
+	else{
+		printf("Success light purple!\n");
+		XSetForeground(display, light_purple_gc, light_purple_col.pixel);
+	}
+
+
+	white_gc = XCreateGC(display, win, 0, 0);
+	XParseColor(display, colormap, white, &white_col);	
+	if (XAllocColor(display, colormap, &white_col) == 0){
+		printf("Failed to get color white\n");
+		exit(-1);
+	}
+	else{
+		printf("Success white!\n");
+		XSetForeground(display, white_gc, white_col.pixel);	
+	}
+	
+
 	
 	while(1){
 		XNextEvent(display, &report);
@@ -592,6 +740,19 @@ int main(int argc, char *argv[]){
 				}
 
 				rewind(fp);
+
+				if (valid_vertex[0][0] != 0.0){
+					for (i= 0; i<k; i++){
+						if  (valid_vertex[i][6] == 0.0 || valid_vertex[i][6] == -4.0){
+							printf("from (%d, %d) to (%d, %d) length: %f and path length: %f\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5]);
+							XDrawLine(display, win, light_purple_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
+						}
+					}
+
+					XFillArc( display, win, black_gc, start_x, start_y, win_width/200, win_width/200, 0, 360*64);
+					XFillArc( display, win, black_gc, target_x, target_y, win_width/200, win_width/200, 0, 360*64);
+				}
+				else{}
 				//printf("exposed\n");
 				XFlush(display);
 				break;
@@ -607,9 +768,7 @@ int main(int argc, char *argv[]){
 				if (report.xbutton.button == Button1){
 					/* left click */
 					count++;
-					if (count > 1){
-						count = 0;
-					}
+					
 					inTriangle = check_if_in_triangle(line_count, m, x, y);
 
 					if (inTriangle == 0){
@@ -628,6 +787,7 @@ int main(int argc, char *argv[]){
 				//printf("count: %d\n", count);
 
 				if (count == 0){
+					reset(m, line_count);
 					start_x = x;
 					start_y = y;
 
@@ -653,7 +813,7 @@ int main(int argc, char *argv[]){
 						}
 						rewind(fp);
 						
-						printf("Total triangles: %d\n", line_count);
+						printf("Total triangles: %d\n", line_count+1);
 
 						for (i = 0; i <= line_count ; i++){
 							for (j=0; j<6; j+=2){
@@ -666,27 +826,6 @@ int main(int argc, char *argv[]){
 
 						printf("Applied start_graph()\n");
 						
-						/*
-						for (i= 0; i<k; i++){
-							printf("From (%d, %d) to (%d, %d) with distance of %f.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4]);
-							XDrawLine(display, win, light_purple_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
-						}
-						*/
-						
-						/*
-						printf(" total lines %d\n", k);
-						
-						for (i= 0; i<k; i++){
-							if  (valid_vertex[i][0] != 0){
-								XDrawLine(display, win, light_purple_gc, valid_vertex[i][0], valid_vertex[i][1], valid_vertex[i][2], valid_vertex[i][3]);
-							}
-						}
-
-						for(i=0; i<k; i++){
-							printf("from (%d, %d) to (%d, %d) is %f long and weight: %f and has visited value: %d.\n", (int)valid_vertex[i][0], (int)valid_vertex[i][1], (int)valid_vertex[i][2], (int)valid_vertex[i][3], valid_vertex[i][4], valid_vertex[i][5], (int)valid_vertex[i][6]);
-						}
-						*/
-
 						shortest_path();
 
 						printf("Applied shortest_path()\n");
@@ -705,9 +844,7 @@ int main(int argc, char *argv[]){
 						printf("DONE\n");
 						
 						count = -1;
-					}
-					else{
-						count -= 1;
+						
 					}
 				}
 
