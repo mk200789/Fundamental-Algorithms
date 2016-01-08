@@ -1,7 +1,6 @@
 /* 
 	Compiles with command line  gcc -o assign3 hw3.c -lX11 -lm -L/usr/X11R6/lib
-	Note: Make sure your input file does not have an empty line, or else error will occur. 
-	Run : ./assign3 test_in
+	Run : ./assign3 test_in2
 	Homework #3
 	Wan Kim Mok
 */
@@ -91,16 +90,6 @@ int orientation(int ax, int ay, int bx, int by, int cx, int cy){
 }
 
 
-int isSame_segment(int ax, int ay, int bx, int by){
-	if (ax == bx && ay == by){
-		//same line segment
-		return 1;
-	}
-	else{
-		return 0;
-	}
-}
-
 int check_intersect(int v[], int h[]){
 	/*
 		Checks if the given line intersects with any of the triangle's line.
@@ -111,7 +100,8 @@ int check_intersect(int v[], int h[]){
 	int ABT = orientation(v[0], v[1], v[2], v[3], h[2], h[3]);
 	int STA = orientation(h[0], h[1], h[2], h[3], v[0], v[1]);
 	int STB = orientation(h[0], h[1], h[2], h[3], v[2], v[3]);
-	if (isSame_segment(v[0], v[1], h[0], h[1]) == 1 && isSame_segment(v[2], v[3], h[2], h[3]) == 1){
+	
+	if ((h[0] == v[0] && v[1] == h[1]) && (h[3] == v[3] && v[2] == h[3])){
 		return 1;
 	}
 	if (ABS != ABT && STA != STB){
