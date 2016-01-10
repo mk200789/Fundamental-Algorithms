@@ -171,12 +171,11 @@ void start_graph(start, target){
 				for(k=0; k<line_count; k++){
 
 					if (isIntersect(p, q, triangles[k].p, triangles[k].q) || isIntersect(p, q, triangles[k].q, triangles[k].r) || isIntersect(p, q, triangles[k].r, triangles[k].p)){
-						if (!intersect1(p, q, triangles[k].p, triangles[k].q)){}
-							else{ intersect = true;break;}
-						if (!intersect1(p, q, triangles[k].q, triangles[k].r)){}
-							else{ intersect= true; break;}
-						if (!intersect1(p, q, triangles[k].r, triangles[k].p)){}
-							else{ intersect = true; break;}
+
+						if (intersect1(p, q, triangles[k].p, triangles[k].q) || intersect1(p, q, triangles[k].q, triangles[k].r) || intersect1(p, q, triangles[k].r, triangles[k].p)){
+							intersect = true;
+							break;
+						}
 					}
 				}
 				if(!intersect){
