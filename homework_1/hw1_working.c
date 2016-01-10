@@ -84,7 +84,6 @@ int orientation(Point a, Point b, Point c){
 	return (a.x*b.y) + (b.x*c.y) + (c.x*a.y) - (a.y*b.x) - (b.y*c.x) - (c.y*a.x);
 }
 
-
 int find_distance(Point a, Point b){
 	/*
 		Returns the distance between two points.
@@ -156,7 +155,34 @@ int intersect1(Point a, Point b, Point c, Point d){
 	return ccw(a,c,d) != ccw(b,c,d) && ccw(a,b,c) != ccw(a,b,d);
 }
 
-void start_graph(start, target){
+bool isSegmentexist(Point p, Point q, Point start, Point target){
+	/*
+		Checks if line segment exist.
+		Returns true if exist, else false.
+	*/
+	int i;
+	if (p.x == q.x && p.y == q.y){
+		return true;
+	}
+
+	if (q.x == start.x && q.y ==start.y){
+		return true;
+	}
+
+	if (p.x == target.x && p.y == target.y){
+		return true;
+	}
+
+	for(i=0; i<num_line_segment; i++){
+		if (vertices[i][0].x == p.x && vertices[i][0].y == p.y && vertices[i][1].x == q.x && vertices[i][1].y == q.y){
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void start_graph(Point start, Point target){
 	int i,j, k;
 	Point p, q;
 	bool intersect = false;
@@ -179,14 +205,41 @@ void start_graph(start, target){
 					}
 				}
 				if(!intersect){
-					vertices[num_line_segment][0]= p;
-					vertices[num_line_segment++][1] = q;
+
+					if (!isSegmentexist(p, q, start, target)){
+						vertices_info[num_line_segment][0] = find_distance(p, q);
+						if (p.x == start.x && p.y == start.y){
+							//handles start point
+							vertices_info[num_line_segment][1] = -2;
+						}
+						else if (q.x == target.x && q.y == target.y){
+							//handles target point
+							vertices_info[num_line_segment][1] = -4;
+						}
+						else{
+							vertices_info[num_line_segment][1] = -1; //-1 for not visited
+						}
+						vertices[num_line_segment][0]= p;
+						vertices[num_line_segment++][1] = q;
+					}
+
+					//backwards 
+					if (!isSegmentexist(q, p, start, target)){
+						vertices_info[num_line_segment][0] = find_distance(q, p);
+						vertices_info[num_line_segment][1] = -1; //-1 for not visited
+						vertices[num_line_segment][0] = q;
+						vertices[num_line_segment++][1] = p;	
+					}
 				}
 				intersect = false;
 			}
 		}
 	}
 
+	return;
+}
+
+void dijkstra(){
 	return;
 }
 
@@ -399,14 +452,12 @@ int main(int argc, char *argv[]){
 
 				if (click_count == 0){
 					//first click;
-					start.x = p1.x;
-					start.y = p1.y;
+					start = p1;
 					point[num_point++] = start;
 				}
 				else if (click_count == 1){
 					//second click
-					target.x = p1.x;
-					target.y = p1.y;
+					target = p1;
 
 					for (i=0; i<line_count; i++){
 						point[num_point++] = triangles[i].p; 
@@ -425,8 +476,11 @@ int main(int argc, char *argv[]){
 
 					start_graph(start, target);
 
+					dijkstra();
+
 					for(i=0; i<num_line_segment; i++){
 						XDrawLine(display, win, red_gc, vertices[i][0].x, vertices[i][0].y, vertices[i][1].x, vertices[i][1].y);
+						printf("from (%d %d) to (%d %d) with distance %d status %d. \n", vertices[i][0].x, vertices[i][0].y, vertices[i][1].x, vertices[i][1].y, vertices_info[i][0], vertices_info[i][1]);
 					}
 
 					printf("complete\n");
