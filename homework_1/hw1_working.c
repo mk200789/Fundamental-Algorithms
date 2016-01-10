@@ -170,9 +170,6 @@ void start_graph(start, target){
 			else{
 				for(k=0; k<line_count; k++){
 
-					printf("1>%d\n", intersect1(p, q, triangles[k].p, triangles[k].q));
-					printf("2>%d\n", intersect1(p, q, triangles[k].q, triangles[k].r));
-					printf("3>%d\n", intersect1(p, q, triangles[k].r, triangles[k].p));
 					if (isIntersect(p, q, triangles[k].p, triangles[k].q) || isIntersect(p, q, triangles[k].q, triangles[k].r) || isIntersect(p, q, triangles[k].r, triangles[k].p)){
 						if (!intersect1(p, q, triangles[k].p, triangles[k].q)){}
 							else{ intersect = true;break;}
@@ -180,16 +177,12 @@ void start_graph(start, target){
 							else{ intersect= true; break;}
 						if (!intersect1(p, q, triangles[k].r, triangles[k].p)){}
 							else{ intersect = true; break;}
-						//intersect = true;
-						//break;
 					}
 				}
 				if(!intersect){
 					vertices[num_line_segment][0]= p;
 					vertices[num_line_segment++][1] = q;
-					printf("(%d %d) to (%d %d).\n", p.x, p.y, q.x, q.y);
 				}
-				else{ printf("NOT(%d %d) to (%d %d).\n", p.x, p.y, q.x, q.y);}
 				intersect = false;
 			}
 		}
