@@ -50,7 +50,6 @@ XSizeHints *size_hints;
 XTextProperty win_name, icon_name;
 char *win_name_string = "Homework 1";
 char *icon_name_string = "Icon for homework 1 window";
-unsigned long valuemask = 0;
 
 XEvent report;
 
@@ -58,11 +57,6 @@ GC gc, green_gc, red_gc, black_gc, light_purple_gc, white_gc;
 XColor green_col, red_col, black_col, light_purple_col, white_col;
 Colormap colormap;
 
-
-//vertices that will be used for dijkstra
-int vertices_info[MAX_VERTICES][2];
-//holds point .from where to where
-Point vertices[MAX_VERTICES][2];
 //holds triangles
 Triangle triangles[MAX_TRIANGLES];
 
@@ -82,6 +76,7 @@ char green[] = "#00FF00";
 char red[] = "#A80000";
 char black[] = "#000000";
 char light_purple[] = "#FFCCFF";
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void reset(){
@@ -401,6 +396,7 @@ int main(int argc, char *argv[]){
 
 	black_gc = XCreateGC(display, win, 0, 0);
 	XParseColor(display, colormap, black, &black_col);
+	XSetLineAttributes(display, black_gc, 2, LineSolid, CapRound, JoinRound);
 	if (XAllocColor(display, colormap, &black_col) == 0){
 		printf("Failed to get color black\n");
 		exit(-1);
@@ -452,6 +448,14 @@ int main(int argc, char *argv[]){
 				if(vertex_count>0){
 					for (i=0; i<vertex_count; i++){
 						XDrawLine(display, win, black_gc, result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
+					}
+					for(i=0; i<num_point;i++){
+						for(j=0; j<num_point; j++){
+							if (graph[i][j]> 0){
+								XDrawLine(display, win, red_gc, 
+									vv[i][j][0].x, vv[i][j][0].y, vv[i][j][1].x, vv[i][j][1].y);
+							}
+						}
 					}
 				}
 
@@ -506,6 +510,15 @@ int main(int argc, char *argv[]){
 					printf("start: (%d, %d). target: (%d, %d).\n", start.x, start.y, target.x, target.y);
 
 					start_graph(start, target);
+
+					for(i=0; i<num_point;i++){
+						for(j=0; j<num_point; j++){
+							if (graph[i][j]> 0){
+								XDrawLine(display, win, red_gc, 
+									vv[i][j][0].x, vv[i][j][0].y, vv[i][j][1].x, vv[i][j][1].y);
+							}
+						}
+					}
 
 					dijkstra(graph, num_point-2);
 
