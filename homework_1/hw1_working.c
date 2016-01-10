@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
 
 #define MAX_VERTICES 600
 #define MAX_TRIANGLES 100
@@ -70,6 +71,9 @@ Point point[MAX_TRIANGLES];
 int num_line_segment;
 int line_count;
 int num_point;
+int graph[MAX_VERTICES][MAX_VERTICES];
+int parent[MAX_VERTICES];
+Point vv[MAX_VERTICES][MAX_VERTICES][2];
 
 char white[] = "#FFFFFF";
 char green[] = "#00FF00";
@@ -155,32 +159,6 @@ int intersect1(Point a, Point b, Point c, Point d){
 	return ccw(a,c,d) != ccw(b,c,d) && ccw(a,b,c) != ccw(a,b,d);
 }
 
-bool isSegmentexist(Point p, Point q, Point start, Point target){
-	/*
-		Checks if line segment exist.
-		Returns true if exist, else false.
-	*/
-	int i;
-	if (p.x == q.x && p.y == q.y){
-		return true;
-	}
-
-	if (q.x == start.x && q.y ==start.y){
-		return true;
-	}
-
-	if (p.x == target.x && p.y == target.y){
-		return true;
-	}
-
-	for(i=0; i<num_line_segment; i++){
-		if (vertices[i][0].x == p.x && vertices[i][0].y == p.y && vertices[i][1].x == q.x && vertices[i][1].y == q.y){
-			return true;
-		}
-	}
-
-	return false;
-}
 
 void start_graph(Point start, Point target){
 	int i,j, k;
@@ -205,31 +183,9 @@ void start_graph(Point start, Point target){
 					}
 				}
 				if(!intersect){
-
-					if (!isSegmentexist(p, q, start, target)){
-						vertices_info[num_line_segment][0] = find_distance(p, q);
-						if (p.x == start.x && p.y == start.y){
-							//handles start point
-							vertices_info[num_line_segment][1] = -2;
-						}
-						else if (q.x == target.x && q.y == target.y){
-							//handles target point
-							vertices_info[num_line_segment][1] = -4;
-						}
-						else{
-							vertices_info[num_line_segment][1] = -1; //-1 for not visited
-						}
-						vertices[num_line_segment][0]= p;
-						vertices[num_line_segment++][1] = q;
-					}
-
-					//backwards 
-					if (!isSegmentexist(q, p, start, target)){
-						vertices_info[num_line_segment][0] = find_distance(q, p);
-						vertices_info[num_line_segment][1] = -1; //-1 for not visited
-						vertices[num_line_segment][0] = q;
-						vertices[num_line_segment++][1] = p;	
-					}
+					graph[i][j] = find_distance(p,q);
+					vv[i][j][0] = p;
+					vv[i][j][1] = q;
 				}
 				intersect = false;
 			}
@@ -239,21 +195,62 @@ void start_graph(Point start, Point target){
 	return;
 }
 
-void dijkstra(){
-	return;
+int minimum_distance(int distance[], int processed[]){
+	int min = INT_MAX; 
+	int min_index=0;
+	int i;
+
+	for(i=0; i<num_point; i++){
+		if(processed[i] == 0 && distance[i]< min){
+			min = distance[i]; 
+			min_index = i;
+		}
+	}
+	return min_index;
 }
 
+void dijkstra(int graph[][MAX_VERTICES], int src){
+	int i, j, v;
+	int processed[num_point], distance[num_point];
+	int temp_v;
+
+	//initialize parent
+	for(i=0;i<MAX_VERTICES; i++){
+		parent[i]= INT_MAX;//999999;
+	}
+	
+	//initialize
+	for(i=0; i<num_point; i++){
+		processed[i]=0; 
+		distance[i]= INT_MAX;//999999;
+	}
+
+	distance[src] = 0;
+
+	for(i=0; i<num_point-1; i++){
+		int u = minimum_distance(distance, processed);
+		processed[u] = 1;
+
+		for (v=0; v< num_point; v++){
+			//printf("%d\n", graph[u][v]);
+			if (!processed[v] && graph[u][v] && distance[u] != INT_MAX && distance[u] < distance[v]){
+				distance[v] = distance[u] + graph[u][v];
+				parent[v] = u;
+			}
+		}
+	}
+	return;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]){
 	FILE *fp;
-	char buff[1000];
 	int i, j;
-	line_count = 0;
 	int click_count = -1;
 	num_line_segment = 0;
 	num_point =0;
+	line_count = 0;
 
 	//store the x,y values of target and start point
 	Point start, target, p1;
@@ -407,7 +404,6 @@ int main(int argc, char *argv[]){
 
 	printf("Total triangles: %d\n", line_count);
 
-
 	while(1){
 		XNextEvent(display, &report);
 		switch(report.type){
@@ -439,7 +435,7 @@ int main(int argc, char *argv[]){
 						click_count = -1;
 					}
 					else{
-						//printf("outside triangle :)\n");
+						printf("outside triangle :)\n");
 					}
 
 				}
@@ -453,34 +449,60 @@ int main(int argc, char *argv[]){
 				if (click_count == 0){
 					//first click;
 					start = p1;
-					point[num_point++] = start;
+					//point[num_point++] = start;
 				}
 				else if (click_count == 1){
 					//second click
 					target = p1;
-
-					for (i=0; i<line_count; i++){
+					
+					for(i=0; i<line_count; i++){
 						point[num_point++] = triangles[i].p; 
 						point[num_point++] = triangles[i].q; 
 						point[num_point++] = triangles[i].r;
 					}
+
+					point[num_point++] = start;
 					point[num_point++] = target;
-
-					for (i=0; i<num_point; i++){
-						printf("%d %d\n", point[i].x, point[i].y);
-					}
-
-					printf("num_point: %d\n", num_point);
 
 					printf("start: (%d, %d). target: (%d, %d).\n", start.x, start.y, target.x, target.y);
 
 					start_graph(start, target);
 
-					dijkstra();
+					dijkstra(graph, num_point-2);
 
-					for(i=0; i<num_line_segment; i++){
-						XDrawLine(display, win, red_gc, vertices[i][0].x, vertices[i][0].y, vertices[i][1].x, vertices[i][1].y);
-						printf("from (%d %d) to (%d %d) with distance %d status %d. \n", vertices[i][0].x, vertices[i][0].y, vertices[i][1].x, vertices[i][1].y, vertices_info[i][0], vertices_info[i][1]);
+					int index = num_point-1;
+					int vertex_count = 0;
+
+					Point result_vertices[MAX_VERTICES][2];
+					int distance[MAX_VERTICES];
+					
+					while(index != num_point-2){
+						if(parent[index] == INT_MAX){
+							break;
+						}
+
+						printf("%d\n", vertex_count);
+						if (vertex_count == 0){
+							result_vertices[vertex_count][0] = point[index];
+							result_vertices[vertex_count][1] = point[index];
+							distance[vertex_count++] = 0;
+						}	
+						else {
+							result_vertices[vertex_count][0] = result_vertices[vertex_count-1][1];
+							result_vertices[vertex_count][1] = point[index];
+							distance[vertex_count++] = find_distance(result_vertices[vertex_count][0], result_vertices[vertex_count][1]);
+						}
+
+						index = parent[index];
+					}
+
+					result_vertices[vertex_count][0] = result_vertices[vertex_count-1][1];
+					result_vertices[vertex_count][1] = point[num_point-2];
+					distance[vertex_count++] = find_distance(result_vertices[vertex_count-1][1], point[num_point-2]);
+
+					for (i=0; i<vertex_count; i++){
+						printf("%d %d to %d %d distance: %d\n", result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y, distance[i]);
+						XDrawLine(display, win, black_gc, result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
 					}
 
 					printf("complete\n");
@@ -498,6 +520,5 @@ int main(int argc, char *argv[]){
 	}
 
 	fclose(fp);
-
 	return 0;
 }
