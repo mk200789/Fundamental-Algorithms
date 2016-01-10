@@ -148,6 +148,13 @@ bool isIntersect(Point P, Point Q, Point R, Point S){
 	return false;
 }
 
+int ccw(Point a, Point b, Point c){
+	return (c.y-a.y) * (b.x-a.x) > (b.y - a.y)*(c.x  - a.x);
+}
+
+int intersect1(Point a, Point b, Point c, Point d){
+	return ccw(a,c,d) != ccw(b,c,d) && ccw(a,b,c) != ccw(a,b,d);
+}
 
 void start_graph(start, target){
 	int i,j, k;
@@ -159,27 +166,32 @@ void start_graph(start, target){
 			p = point[i];
 			q = point[j];
 
-			for(k=0; k<line_count; k++){
-				//printf("(%d, %d) (%d, %d) (%d, %d)\n", triangles[k].p.x, triangles[k].p.y, triangles[k].q.x, triangles[k].q.y, triangles[k].r.x, triangles[k].r.y);
-				if(isIntriangle1(p, triangles[k].p, triangles[k].q, triangles[k].r) || isIntriangle1(q, triangles[k].p, triangles[k].q, triangles[k].r)){
-					intersect = true;
-					break;
+			if (isIntriangle(line_count, p) || isIntriangle(line_count, q)){}
+			else{
+				for(k=0; k<line_count; k++){
+
+					printf("1>%d\n", intersect1(p, q, triangles[k].p, triangles[k].q));
+					printf("2>%d\n", intersect1(p, q, triangles[k].q, triangles[k].r));
+					printf("3>%d\n", intersect1(p, q, triangles[k].r, triangles[k].p));
+					if (isIntersect(p, q, triangles[k].p, triangles[k].q) || isIntersect(p, q, triangles[k].q, triangles[k].r) || isIntersect(p, q, triangles[k].r, triangles[k].p)){
+						if (!intersect1(p, q, triangles[k].p, triangles[k].q)){}
+							else{ intersect = true;break;}
+						if (!intersect1(p, q, triangles[k].q, triangles[k].r)){}
+							else{ intersect= true; break;}
+						if (!intersect1(p, q, triangles[k].r, triangles[k].p)){}
+							else{ intersect = true; break;}
+						//intersect = true;
+						//break;
+					}
 				}
-				
-				if (isIntersect(p, q, triangles[k].p, triangles[k].q) || isIntersect(p, q, triangles[k].q, triangles[k].r) || isIntersect(p, q, triangles[k].r, triangles[k].p)){
-					intersect = true;
-					break;
+				if(!intersect){
+					vertices[num_line_segment][0]= p;
+					vertices[num_line_segment++][1] = q;
+					printf("(%d %d) to (%d %d).\n", p.x, p.y, q.x, q.y);
 				}
+				else{ printf("NOT(%d %d) to (%d %d).\n", p.x, p.y, q.x, q.y);}
+				intersect = false;
 			}
-			
-			if (!intersect){
-				//printf("(%d %d) to (%d %d).\n", p.x, p.y, q.x, q.y);
-				vertices_info[num_line_segment][0] = find_distance(p, q);
-				vertices_info[num_line_segment][1] = -1; //-1 for not visited
-				vertices[num_line_segment][0] = p;
-				vertices[num_line_segment++][1] = q;
-			}
-			intersect = false;
 		}
 	}
 
