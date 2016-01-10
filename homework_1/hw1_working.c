@@ -68,12 +68,14 @@ Triangle triangles[MAX_TRIANGLES];
 
 Point point[MAX_TRIANGLES];
 
-int num_line_segment;
 int line_count;
 int num_point;
 int graph[MAX_VERTICES][MAX_VERTICES];
 int parent[MAX_VERTICES];
 Point vv[MAX_VERTICES][MAX_VERTICES][2];
+int vertex_count;
+Point result_vertices[MAX_VERTICES][2];
+int distance[MAX_VERTICES];
 
 char white[] = "#FFFFFF";
 char green[] = "#00FF00";
@@ -82,7 +84,37 @@ char black[] = "#000000";
 char light_purple[] = "#FFCCFF";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+void reset(){
+	int i, j;
 
+	for(i=0; i<num_point; i++){
+		point[i].x = 0;
+		point[i].y = 0;
+	}
+
+	for(i=0;i<num_point; i++){
+		for(j=0; j<num_point; j++){
+			graph[i][j] = 0;
+		}
+	}
+
+	for(i=0; i <vertex_count; i++){
+		XDrawLine(display, win, white_gc, 
+			result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
+	}
+
+	for (i=0; i< line_count ; i++){
+		//Draw the triangles
+		XDrawLine(display, win, green_gc, triangles[i].p.x, triangles[i].p.y, triangles[i].q.x, triangles[i].q.y);
+		XDrawLine(display, win, green_gc, triangles[i].q.x, triangles[i].q.y, triangles[i].r.x, triangles[i].r.y);
+		XDrawLine(display, win, green_gc, triangles[i].r.x, triangles[i].r.y, triangles[i].p.x, triangles[i].p.y);
+	}
+
+	num_point = 0;
+	vertex_count =0;
+
+	return;
+}
 int orientation(Point a, Point b, Point c){
 
 	return (a.x*b.y) + (b.x*c.y) + (c.x*a.y) - (a.y*b.x) - (b.y*c.x) - (c.y*a.x);
@@ -248,9 +280,9 @@ int main(int argc, char *argv[]){
 	FILE *fp;
 	int i, j;
 	int click_count = -1;
-	num_line_segment = 0;
 	num_point =0;
 	line_count = 0;
+	vertex_count=0;
 
 	//store the x,y values of target and start point
 	Point start, target, p1;
@@ -417,6 +449,12 @@ int main(int argc, char *argv[]){
 					XDrawLine(display, win, green_gc, triangles[i].r.x, triangles[i].r.y, triangles[i].p.x, triangles[i].p.y);
 				}
 
+				if(vertex_count>0){
+					for (i=0; i<vertex_count; i++){
+						XDrawLine(display, win, black_gc, result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
+					}
+				}
+
 				XFlush(display);
 				break;
 			}
@@ -448,6 +486,7 @@ int main(int argc, char *argv[]){
 
 				if (click_count == 0){
 					//first click;
+					reset();
 					start = p1;
 					//point[num_point++] = start;
 				}
@@ -471,17 +510,11 @@ int main(int argc, char *argv[]){
 					dijkstra(graph, num_point-2);
 
 					int index = num_point-1;
-					int vertex_count = 0;
-
-					Point result_vertices[MAX_VERTICES][2];
-					int distance[MAX_VERTICES];
 					
 					while(index != num_point-2){
 						if(parent[index] == INT_MAX){
 							break;
 						}
-
-						printf("%d\n", vertex_count);
 						if (vertex_count == 0){
 							result_vertices[vertex_count][0] = point[index];
 							result_vertices[vertex_count][1] = point[index];
@@ -500,7 +533,7 @@ int main(int argc, char *argv[]){
 					result_vertices[vertex_count][1] = point[num_point-2];
 					distance[vertex_count++] = find_distance(result_vertices[vertex_count-1][1], point[num_point-2]);
 
-					for (i=0; i<vertex_count; i++){
+					for (i=vertex_count-1; i>=0; i--){
 						printf("%d %d to %d %d distance: %d\n", result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y, distance[i]);
 						XDrawLine(display, win, black_gc, result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
 					}
