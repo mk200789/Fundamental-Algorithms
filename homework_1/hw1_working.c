@@ -1,6 +1,6 @@
 /* 
 	Compiles and run with command lines
-			gcc -o assign1 hw1.c -lX11 -lm -L/usr/X11R6/lib
+			gcc -o assign1 hw1_working.c -lX11 -lm -L/usr/X11R6/lib
 			./assign test_in
 	Homework #1
 	Wan Kim Mok
@@ -84,11 +84,18 @@ int orientation(Point a, Point b, Point c){
 	return (a.x*b.y) + (b.x*c.y) + (c.x*a.y) - (a.y*b.x) - (b.y*c.x) - (c.y*a.x);
 }
 
+
 int find_distance(Point a, Point b){
 	/*
 		Returns the distance between two points.
 	*/
 	return (int) sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+}
+
+bool isSamePoint (Point p, Point q) {
+    if (p.x == q.x && p.y == q.y)
+        return true;
+    return false;
 }
 
 bool isIntriangle(int line_count, Point p1){
@@ -121,7 +128,9 @@ bool isIntriangle1(Point p1, Point a, Point b, Point c){
 		Return 1 if point is n triangle, else return 0.
 	*/
 
-	if (orientation(p1, a, b)*orientation(c, a, b) > 0  && orientation(p1, b, c)*orientation(a, b, c) > 0 && orientation(p1, a, c)*orientation(b, a, c) > 0 ){
+	if (orientation(p1, a, b)*orientation(c, a, b) > 0  && 
+		orientation(p1, b, c)*orientation(a, b, c) > 0 && 
+		orientation(p1, a, c)*orientation(b, a, c) > 0 ){
 		//point is in the triangle
 		return true;
 	}
@@ -130,15 +139,15 @@ bool isIntriangle1(Point p1, Point a, Point b, Point c){
 }
 
 bool isIntersect(Point P, Point Q, Point R, Point S){
-	//if ((h[0] == v[0] && v[1] == h[1]) && (h[3] == v[3] && v[2] == h[3])){
-	if (P.x == Q.x && P.y == Q.x && R.x == S.x && R.y == S.y){
+	if (isSamePoint(P, R) && isSamePoint(Q,S)){
 		return true;
 	}
-	if (orientation(P, Q, R) * orientation(P, Q, S) < 0 && orientation(R,S,P) * orientation(R, S, Q)<1){
+	if (orientation(P, Q, R)*orientation(P, Q, S)<0 && orientation(R,S,P)*orientation(R, S, Q)<0){
 		return true;
 	}
 	return false;
 }
+
 
 void start_graph(start, target){
 	int i,j, k;
@@ -149,39 +158,31 @@ void start_graph(start, target){
 		for(j=0; j<num_point; j++){
 			p = point[i];
 			q = point[j];
-			for(k=0; k<line_count; k++){
-				//if (q.x != p.x && q.y != p.y){
-					if(!isIntersect(p, q, triangles[k].p, triangles[k].q) && !isIntriangle1(p, triangles[k].p, triangles[k].q, triangles[k].r) && !isIntriangle1(q, triangles[k].p, triangles[k].q, triangles[k].r)){
-					}
-					else{
-						intersect = true;
-					}
-					if(!isIntersect(p, q, triangles[k].q, triangles[k].r) && !isIntriangle1(p, triangles[k].p, triangles[k].q, triangles[k].r) && !isIntriangle1(q, triangles[k].p, triangles[k].q, triangles[k].r)){
-					}
-					else{
-						intersect = true;
-					}
-					if(!isIntersect(p, q, triangles[k].r, triangles[k].p) && !isIntriangle1(p, triangles[k].p, triangles[k].q, triangles[k].r) && !isIntriangle1(q, triangles[k].p, triangles[k].q, triangles[k].r)){
-						//printf("(%d %d) (%d %d) does not intersect with (%d %d) (%d %d)\n", p.x, p.y, q.x, q.y, triangles[k].r.x, triangles[k].r.y, triangles[k].p.x, triangles[k].p.y);
-					}
-					else{
-						intersect = true;
-						//printf("(%d %d) (%d %d) intersect with (%d %d) (%d %d)\n", p.x, p.y, q.x, q.y, triangles[k].r.x, triangles[k].r.y, triangles[k].p.x, triangles[k].p.y);
-					}
 
-				//}
+			for(k=0; k<line_count; k++){
+				//printf("(%d, %d) (%d, %d) (%d, %d)\n", triangles[k].p.x, triangles[k].p.y, triangles[k].q.x, triangles[k].q.y, triangles[k].r.x, triangles[k].r.y);
+				if(isIntriangle1(p, triangles[k].p, triangles[k].q, triangles[k].r) || isIntriangle1(q, triangles[k].p, triangles[k].q, triangles[k].r)){
+					intersect = true;
+					break;
+				}
+				
+				if (isIntersect(p, q, triangles[k].p, triangles[k].q) || isIntersect(p, q, triangles[k].q, triangles[k].r) || isIntersect(p, q, triangles[k].r, triangles[k].p)){
+					intersect = true;
+					break;
+				}
 			}
-					//printf("%d\n", intersect);
-					if (!intersect){
-						printf("(%d %d) to (%d %d).\n", p.x, p.y, q.x, q.y);
-						vertices_info[num_line_segment][0] = find_distance(p, q);
-						vertices_info[num_line_segment][1] = -1; //-1 for not visited
-						vertices[num_line_segment][0] = p;
-						vertices[num_line_segment++][1] = q;
-					}
+			
+			if (!intersect){
+				//printf("(%d %d) to (%d %d).\n", p.x, p.y, q.x, q.y);
+				vertices_info[num_line_segment][0] = find_distance(p, q);
+				vertices_info[num_line_segment][1] = -1; //-1 for not visited
+				vertices[num_line_segment][0] = p;
+				vertices[num_line_segment++][1] = q;
+			}
 			intersect = false;
 		}
 	}
+
 	return;
 }
 
@@ -404,7 +405,9 @@ int main(int argc, char *argv[]){
 					target.y = p1.y;
 
 					for (i=0; i<line_count; i++){
-						point[num_point++] = triangles[i].p; point[num_point++] = triangles[i].q; point[num_point++] = triangles[i].r;
+						point[num_point++] = triangles[i].p; 
+						point[num_point++] = triangles[i].q; 
+						point[num_point++] = triangles[i].r;
 					}
 					point[num_point++] = target;
 
