@@ -20,6 +20,9 @@
 #define MAX_VERTICES 600
 #define MAX_TRIANGLES 100
 
+#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
+#define min( a, b ) ( ((a) < (b)) ? (a) : (b) )
+
 typedef enum { false, true } bool;
 
 typedef struct{
@@ -137,10 +140,20 @@ int find_distance(Point a, Point b){
 	return (int) sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
 }
 
-bool isSamePoint (Point p, Point q) {
-    if (p.x == q.x && p.y == q.y)
-        return true;
+bool isSamePoint (Point p, Point q, Point r, Point s) {
+	if (p.x == r.x && p.y == r.y || q.x == s.x && q.y == s.y ||
+		p.x == s.x && p.y == s.y || q.x == r.x && q.y == r.y){
+		return true;
+	}
     return false;
+}
+
+bool onSegment(Point p, Point q, Point r){
+	if (r.x <= max(p.x, q.x) && r.x >= min(p.x, q.x) &&
+		r.y <= max(p.y, q.y) && r.y >= min(p.y, q.y)){
+		return true;
+	}
+	return false;
 }
 
 bool isIntriangle(int line_count, Point p1){
@@ -148,87 +161,94 @@ bool isIntriangle(int line_count, Point p1){
 		Checks if a point(vertex) is within another triangle.
 		Return 1 if point is n triangle, else return 0.
 	*/
-	int PAB, PBC, PAC, CAB, BAC, ABC;
 	int i;
+	bool check1, check2, check3;
 	for (i = 0; i < line_count; i++){
+		check1 = orientation(p1, triangles[i].p, triangles[i].q) > 0 && orientation(triangles[i].p, triangles[i].q, triangles[i].r) > 0 ||
+			orientation(p1, triangles[i].p, triangles[i].q) < 0 && orientation(triangles[i].p, triangles[i].q, triangles[i].r) < 0 ||
+			orientation(p1, triangles[i].p, triangles[i].q) == 0 && orientation(triangles[i].p, triangles[i].q, triangles[i].r) == 0;
 
-		PAB = orientation(p1, triangles[i].p, triangles[i].q);
-		PBC = orientation(p1, triangles[i].q, triangles[i].r);
-		PAC = orientation(p1, triangles[i].p, triangles[i].r);
-		CAB = orientation(triangles[i].r, triangles[i].p, triangles[i].q);
-		ABC = orientation(triangles[i].p, triangles[i].q, triangles[i].r);
-		BAC = orientation(triangles[i].q, triangles[i].p, triangles[i].r);
-		
-		if (PAB*CAB > 0  && PBC*ABC > 0 && PAC*BAC > 0 ){
-			//point is in the triangle
+		check2 = orientation(triangles[i].q, triangles[i].r, p1) > 0 && orientation(triangles[i].q, triangles[i].r, triangles[i].p) > 0 ||
+			orientation(triangles[i].q, triangles[i].r, p1) < 0 && orientation(triangles[i].q, triangles[i].r, triangles[i].p) < 0 ||
+			orientation(triangles[i].q, triangles[i].r, p1) == 0 && orientation(triangles[i].q, triangles[i].r, triangles[i].p) == 0 ;
+
+		check3 = orientation(triangles[i].p, triangles[i].r, p1) > 0 && orientation(triangles[i].p, triangles[i].r, triangles[i].q) > 0 ||
+			orientation(triangles[i].p, triangles[i].r, p1) < 0 && orientation(triangles[i].p, triangles[i].r, triangles[i].q) < 0 ||
+			orientation(triangles[i].p, triangles[i].r, p1) == 0 && orientation(triangles[i].p, triangles[i].r, triangles[i].q) == 0 ;
+
+		if (check1 && check2 && check3){
 			return true;
 		}
 	}
 	return false;
 }
 
-bool isIntriangle1(Point p1, Point a, Point b, Point c){
-	/*
-		Checks if a point(vertex) is within another triangle.
-		Return 1 if point is n triangle, else return 0.
-	*/
 
-	if (orientation(p1, a, b)*orientation(c, a, b) > 0  && 
-		orientation(p1, b, c)*orientation(a, b, c) > 0 && 
-		orientation(p1, a, c)*orientation(b, a, c) > 0 ){
-		//point is in the triangle
+bool isIntersect(Point p, Point q, Point r, Point s){
+	int o1 = orientation(p,q,r);
+	int o2 = orientation(p,q,s);
+	int o3 = orientation(r,s,p);
+	int o4 = orientation(r,s,q);
+
+
+	if(isSamePoint(p, q, r, s)){
+		return false;
+	}
+
+	if ( ((o1 == 0 && o2 > 0 )|| (o1 > 0 && o2 == 0) || (o1 < 0 && o2 > 0 )|| (o1 > 0 && o2 < 0) || (o1 == 0 && o2 < 0 )|| (o1 < 0 && o2 == 0)) && 
+		 ((o3 == 0 && o4 > 0 )|| (o3 > 0 && o4 == 0) || (o3 < 0 && o4 > 0 )|| (o3 > 0 && o4 < 0) || (o3 == 0 && o4 < 0 )|| (o3 < 0 && o4 == 0)) ){
+		return true;
+	}
+	
+	if (o1 == 0 && onSegment(p,q,r)){
 		return true;
 	}
 
+	if(o2 == 0 && onSegment(p,q,s)){
+		return true;
+	}
+
+	if (o3 == 0 && onSegment(r,s,p)){
+		return true;
+	}
+
+	if (o4 == 0 && onSegment(r,s,q)){
+		return true;
+	}
 	return false;
 }
 
-bool isIntersect(Point P, Point Q, Point R, Point S){
-	if (isSamePoint(P, R) && isSamePoint(Q,S)){
-		return true;
+
+bool intersectTriangles(Point p, Point q){
+	int k;
+
+	for (k=0; k<line_count; k++){
+		if (isIntersect(p, q, triangles[k].p, triangles[k].q) ||
+			isIntersect(p, q, triangles[k].q, triangles[k].r) ||
+			isIntersect(p, q, triangles[k].r, triangles[k].p)){
+			return true;
+		}
 	}
-	if (orientation(P, Q, R)*orientation(P, Q, S)<0 && orientation(R,S,P)*orientation(R, S, Q)<0){
-		return true;
-	}
+
 	return false;
-}
-
-int ccw(Point a, Point b, Point c){
-	return (c.y-a.y) * (b.x-a.x) > (b.y - a.y)*(c.x  - a.x);
-}
-
-int intersect1(Point a, Point b, Point c, Point d){
-	return ccw(a,c,d) != ccw(b,c,d) && ccw(a,b,c) != ccw(a,b,d);
 }
 
 void start_graph(Point start, Point target){
 	int i,j, k;
 	Point p, q;
-	bool intersect = false;
 	
 	for(i=0; i<num_point; i++){
 		for(j=0; j<num_point; j++){
 			p = point[i];
 			q = point[j];
 
-			if (isIntriangle(line_count, p) || isIntriangle(line_count, q)){}
-			else{
-				for(k=0; k<line_count; k++){
+			if (!isIntriangle(line_count, p) && !isIntriangle(line_count, q)){
 
-					if (isIntersect(p, q, triangles[k].p, triangles[k].q) || isIntersect(p, q, triangles[k].q, triangles[k].r) || isIntersect(p, q, triangles[k].r, triangles[k].p)){
-
-						if (intersect1(p, q, triangles[k].p, triangles[k].q) || intersect1(p, q, triangles[k].q, triangles[k].r) || intersect1(p, q, triangles[k].r, triangles[k].p)){
-							intersect = true;
-							break;
-						}
-					}
-				}
-				if(!intersect){
+				if(!intersectTriangles(p, q)){
 					graph[i][j] = find_distance(p,q);
 					vv[i][j][0] = p;
 					vv[i][j][1] = q;
 				}
-				intersect = false;
 			}
 		}
 	}
