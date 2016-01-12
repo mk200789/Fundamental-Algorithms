@@ -78,9 +78,21 @@ char black[] = "#000000";
 char light_purple[] = "#FFCCFF";
 
 
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void reset(){
 	int i, j;
+
+	for(i=0; i<num_point;i++){
+		for(j=0; j<num_point; j++){
+			if (graph[i][j]> 0){
+				XDrawLine(display, win, white_gc, 
+					vv[i][j][0].x, vv[i][j][0].y, vv[i][j][1].x, vv[i][j][1].y);
+			}
+		}
+	}
+
 
 	for(i=0; i<num_point; i++){
 		point[i].x = 0;
@@ -90,6 +102,7 @@ void reset(){
 	for(i=0;i<num_point; i++){
 		for(j=0; j<num_point; j++){
 			graph[i][j] = 0;
+			vv[i][j][0].x = 0; vv[i][j][0].y = 0; vv[i][j][1].x = 0; vv[i][j][1].y = 0;
 		}
 	}
 
@@ -98,12 +111,14 @@ void reset(){
 			result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
 	}
 
+
 	for (i=0; i< line_count ; i++){
 		//Draw the triangles
 		XDrawLine(display, win, green_gc, triangles[i].p.x, triangles[i].p.y, triangles[i].q.x, triangles[i].q.y);
 		XDrawLine(display, win, green_gc, triangles[i].q.x, triangles[i].q.y, triangles[i].r.x, triangles[i].r.y);
 		XDrawLine(display, win, green_gc, triangles[i].r.x, triangles[i].r.y, triangles[i].p.x, triangles[i].p.y);
 	}
+
 
 	num_point = 0;
 	vertex_count =0;
@@ -185,7 +200,6 @@ int ccw(Point a, Point b, Point c){
 int intersect1(Point a, Point b, Point c, Point d){
 	return ccw(a,c,d) != ccw(b,c,d) && ccw(a,b,c) != ccw(a,b,d);
 }
-
 
 void start_graph(Point start, Point target){
 	int i,j, k;
@@ -420,7 +434,8 @@ int main(int argc, char *argv[]){
 
 
 	white_gc = XCreateGC(display, win, 0, 0);
-	XParseColor(display, colormap, white, &white_col);	
+	XParseColor(display, colormap, white, &white_col);
+	XSetLineAttributes(display, white_gc, 2, LineSolid, CapRound, JoinRound);
 	if (XAllocColor(display, colormap, &white_col) == 0){
 		printf("Failed to get color white\n");
 		exit(-1);
