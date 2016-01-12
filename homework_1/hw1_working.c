@@ -74,6 +74,8 @@ int vertex_count;
 Point result_vertices[MAX_VERTICES][2];
 int distance[MAX_VERTICES];
 
+bool path_exist;
+
 char white[] = "#FFFFFF";
 char green[] = "#00FF00";
 char red[] = "#A80000";
@@ -125,6 +127,7 @@ void reset(){
 
 	num_point = 0;
 	vertex_count =0;
+	path_exist = false;
 
 	return;
 }
@@ -287,7 +290,7 @@ void dijkstra(int graph[][MAX_VERTICES], int src){
 
 		for (v=0; v< num_point; v++){
 			//printf("%d\n", graph[u][v]);
-			if (!processed[v] && graph[u][v] && distance[u] != INT_MAX && distance[u] < distance[v]){
+			if (!processed[v] && graph[u][v] && distance[u] != INT_MAX && distance[u]+graph[u][v] < distance[v]){
 				distance[v] = distance[u] + graph[u][v];
 				parent[v] = u;
 			}
@@ -473,10 +476,10 @@ int main(int argc, char *argv[]){
 					XDrawLine(display, win, green_gc, triangles[i].r.x, triangles[i].r.y, triangles[i].p.x, triangles[i].p.y);
 				}
 
-				if(vertex_count>0){
-					for (i=0; i<vertex_count; i++){
-						XDrawLine(display, win, black_gc, result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
-					}
+
+				if(path_exist){
+					printf("PATH_EXIST\n");
+
 					for(i=0; i<num_point;i++){
 						for(j=0; j<num_point; j++){
 							if (graph[i][j]> 0){
@@ -484,6 +487,10 @@ int main(int argc, char *argv[]){
 									vv[i][j][0].x, vv[i][j][0].y, vv[i][j][1].x, vv[i][j][1].y);
 							}
 						}
+					}
+
+					for (i=0; i<vertex_count; i++){
+						XDrawLine(display, win, black_gc, result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
 					}
 				}
 
@@ -554,8 +561,11 @@ int main(int argc, char *argv[]){
 					
 					while(index != num_point-2){
 						if(parent[index] == INT_MAX){
+							path_exist = false;
 							break;
 						}
+
+						path_exist = true;
 						if (vertex_count == 0){
 							result_vertices[vertex_count][0] = point[index];
 							result_vertices[vertex_count][1] = point[index];
@@ -574,9 +584,12 @@ int main(int argc, char *argv[]){
 					result_vertices[vertex_count][1] = point[num_point-2];
 					distance[vertex_count++] = find_distance(result_vertices[vertex_count-1][1], point[num_point-2]);
 
-					for (i=vertex_count-1; i>=0; i--){
-						printf("%d %d to %d %d distance: %d\n", result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y, distance[i]);
-						XDrawLine(display, win, black_gc, result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
+					if (path_exist){
+						//handles the case if path don't exist
+						for (i=vertex_count-1; i>=0; i--){
+							printf("%d %d to %d %d distance: %d\n", result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y, distance[i]);
+							XDrawLine(display, win, black_gc, result_vertices[i][0].x, result_vertices[i][0].y, result_vertices[i][1].x, result_vertices[i][1].y);
+						}
 					}
 
 					printf("complete\n");
