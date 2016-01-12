@@ -83,8 +83,6 @@ char black[] = "#000000";
 char light_purple[] = "#FFCCFF";
 
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void reset(){
 	int i, j;
@@ -273,13 +271,13 @@ void dijkstra(int graph[][MAX_VERTICES], int src){
 
 	//initialize parent
 	for(i=0;i<MAX_VERTICES; i++){
-		parent[i]= INT_MAX;//999999;
+		parent[i]= INT_MAX;
 	}
 	
 	//initialize
 	for(i=0; i<num_point; i++){
 		processed[i]=0; 
-		distance[i]= INT_MAX;//999999;
+		distance[i]= INT_MAX;
 	}
 
 	distance[src] = 0;
@@ -476,10 +474,7 @@ int main(int argc, char *argv[]){
 					XDrawLine(display, win, green_gc, triangles[i].r.x, triangles[i].r.y, triangles[i].p.x, triangles[i].p.y);
 				}
 
-
 				if(path_exist){
-					printf("PATH_EXIST\n");
-
 					for(i=0; i<num_point;i++){
 						for(j=0; j<num_point; j++){
 							if (graph[i][j]> 0){
