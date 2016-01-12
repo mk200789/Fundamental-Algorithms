@@ -133,6 +133,15 @@ int orientation(Point a, Point b, Point c){
 	return (a.x*b.y) + (b.x*c.y) + (c.x*a.y) - (a.y*b.x) - (b.y*c.x) - (c.y*a.x);
 }
 
+bool direction(int orientation){
+	//returns value of orientation
+	if (orientation == 0){
+		return 0; //colinear
+	}
+	return (orientation > 0) ? 1: 2; //clock or counterclockwise
+}
+
+
 int find_distance(Point a, Point b){
 	/*
 		Returns the distance between two points.
@@ -164,17 +173,11 @@ bool isIntriangle(int line_count, Point p1){
 	int i;
 	bool check1, check2, check3;
 	for (i = 0; i < line_count; i++){
-		check1 = orientation(p1, triangles[i].p, triangles[i].q) > 0 && orientation(triangles[i].p, triangles[i].q, triangles[i].r) > 0 ||
-			orientation(p1, triangles[i].p, triangles[i].q) < 0 && orientation(triangles[i].p, triangles[i].q, triangles[i].r) < 0 ||
-			orientation(p1, triangles[i].p, triangles[i].q) == 0 && orientation(triangles[i].p, triangles[i].q, triangles[i].r) == 0;
+		check1 = direction(orientation(p1, triangles[i].p, triangles[i].q)) == direction(orientation(triangles[i].p, triangles[i].q, triangles[i].r));
 
-		check2 = orientation(triangles[i].q, triangles[i].r, p1) > 0 && orientation(triangles[i].q, triangles[i].r, triangles[i].p) > 0 ||
-			orientation(triangles[i].q, triangles[i].r, p1) < 0 && orientation(triangles[i].q, triangles[i].r, triangles[i].p) < 0 ||
-			orientation(triangles[i].q, triangles[i].r, p1) == 0 && orientation(triangles[i].q, triangles[i].r, triangles[i].p) == 0 ;
+		check2 = direction(orientation(triangles[i].q, triangles[i].r, p1)) == direction(orientation(triangles[i].q, triangles[i].r, triangles[i].p));
 
-		check3 = orientation(triangles[i].p, triangles[i].r, p1) > 0 && orientation(triangles[i].p, triangles[i].r, triangles[i].q) > 0 ||
-			orientation(triangles[i].p, triangles[i].r, p1) < 0 && orientation(triangles[i].p, triangles[i].r, triangles[i].q) < 0 ||
-			orientation(triangles[i].p, triangles[i].r, p1) == 0 && orientation(triangles[i].p, triangles[i].r, triangles[i].q) == 0 ;
+		check3 = direction(orientation(triangles[i].p, triangles[i].r, p1)) == direction(orientation(triangles[i].p, triangles[i].r, triangles[i].q));
 
 		if (check1 && check2 && check3){
 			return true;
@@ -195,24 +198,23 @@ bool isIntersect(Point p, Point q, Point r, Point s){
 		return false;
 	}
 
-	if ( ((o1 == 0 && o2 > 0 )|| (o1 > 0 && o2 == 0) || (o1 < 0 && o2 > 0 )|| (o1 > 0 && o2 < 0) || (o1 == 0 && o2 < 0 )|| (o1 < 0 && o2 == 0)) && 
-		 ((o3 == 0 && o4 > 0 )|| (o3 > 0 && o4 == 0) || (o3 < 0 && o4 > 0 )|| (o3 > 0 && o4 < 0) || (o3 == 0 && o4 < 0 )|| (o3 < 0 && o4 == 0)) ){
-		return true;
-	}
-	
-	if (o1 == 0 && onSegment(p,q,r)){
+	if (direction(o1) != direction (o2) && direction(o3) != direction(o4)){
 		return true;
 	}
 
-	if(o2 == 0 && onSegment(p,q,s)){
+	if (direction(o1) == 0 && onSegment(p,q,r)){
 		return true;
 	}
 
-	if (o3 == 0 && onSegment(r,s,p)){
+	if(direction(o2) == 0 && onSegment(p,q,s)){
 		return true;
 	}
 
-	if (o4 == 0 && onSegment(r,s,q)){
+	if (direction(o3) == 0 && onSegment(r,s,p)){
+		return true;
+	}
+
+	if (direction(o4) == 0 && onSegment(r,s,q)){
 		return true;
 	}
 	return false;
