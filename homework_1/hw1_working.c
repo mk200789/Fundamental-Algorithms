@@ -193,7 +193,6 @@ bool isIntersect(Point p, Point q, Point r, Point s){
 	int o3 = orientation(r,s,p);
 	int o4 = orientation(r,s,q);
 
-
 	if(isSamePoint(p, q, r, s)){
 		return false;
 	}
@@ -202,21 +201,13 @@ bool isIntersect(Point p, Point q, Point r, Point s){
 		return true;
 	}
 
-	if (direction(o1) == 0 && onSegment(p,q,r)){
+	if ((direction(o1) == 0 && onSegment(p,q,r)) || 
+		(direction(o2) == 0 && onSegment(p,q,s)) || 
+		(direction(o3) == 0 && onSegment(r,s,p)) || 
+		(direction(o4) == 0 && onSegment(r,s,q))){
 		return true;
 	}
 
-	if(direction(o2) == 0 && onSegment(p,q,s)){
-		return true;
-	}
-
-	if (direction(o3) == 0 && onSegment(r,s,p)){
-		return true;
-	}
-
-	if (direction(o4) == 0 && onSegment(r,s,q)){
-		return true;
-	}
 	return false;
 }
 
