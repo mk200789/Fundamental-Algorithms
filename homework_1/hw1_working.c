@@ -284,7 +284,7 @@ void dijkstra(int graph[][MAX_VERTICES], int src){
 
 	distance[src] = 0;
 
-	for(i=0; i<num_point-1; i++){
+	for(i=0; i<num_point; i++){
 		int u = minimum_distance(distance, processed);
 		processed[u] = 1;
 
