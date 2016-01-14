@@ -130,27 +130,36 @@ void reset(){
 	return;
 }
 int orientation(Point a, Point b, Point c){
-
+	/* 
+		Returns the value for determining the 3 points' orientation.
+	*/
 	return (a.x*b.y) + (b.x*c.y) + (c.x*a.y) - (a.y*b.x) - (b.y*c.x) - (c.y*a.x);
 }
 
 bool direction(int orientation){
-	//returns value of orientation
+	/*
+		Returns value of orientation: 
+			orientation==0: colinear 
+			orientation> 0: clockwise
+			orientation< 0: counterclockwise
+	*/
 	if (orientation == 0){
-		return 0; //colinear
+		return 0;
 	}
-	return (orientation > 0) ? 1: 2; //clock or counterclockwise
+	return (orientation > 0) ? 1: 2;
 }
-
 
 int find_distance(Point a, Point b){
 	/*
-		Returns the distance between two points.
+		Returns the distance between two points using Euclidean.
 	*/
 	return (int) sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
 }
 
 bool isSamePoint (Point p, Point q, Point r, Point s) {
+	/*
+		Returns true if points aare the same, else false.
+	*/
 	if (p.x == r.x && p.y == r.y || q.x == s.x && q.y == s.y ||
 		p.x == s.x && p.y == s.y || q.x == r.x && q.y == r.y){
 		return true;
@@ -159,6 +168,9 @@ bool isSamePoint (Point p, Point q, Point r, Point s) {
 }
 
 bool onSegment(Point p, Point q, Point r){
+	/*
+		Checks if point r is on pq. If on line segment return true, else false.
+	*/
 	if (r.x <= max(p.x, q.x) && r.x >= min(p.x, q.x) &&
 		r.y <= max(p.y, q.y) && r.y >= min(p.y, q.y)){
 		return true;
@@ -168,8 +180,8 @@ bool onSegment(Point p, Point q, Point r){
 
 bool isIntriangle(int line_count, Point p1){
 	/*
-		Checks if a point(vertex) is within another triangle.
-		Return 1 if point is n triangle, else return 0.
+		Checks if a point is within any triangle.
+		If point is in triangle return true, else false.
 	*/
 	int i;
 	bool check1, check2, check3;
@@ -189,6 +201,10 @@ bool isIntriangle(int line_count, Point p1){
 
 
 bool isIntersect(Point p, Point q, Point r, Point s){
+	/*
+		Checks if line (p,q) intersect with line (r,s).
+		If intersects return true, else return false.
+	*/
 	int o1 = orientation(p,q,r);
 	int o2 = orientation(p,q,s);
 	int o3 = orientation(r,s,p);
@@ -201,7 +217,7 @@ bool isIntersect(Point p, Point q, Point r, Point s){
 	if (direction(o1) != direction (o2) && direction(o3) != direction(o4)){
 		return true;
 	}
-
+	//special cases if points are colinear and lies on segment
 	if ((direction(o1) == 0 && onSegment(p,q,r)) || 
 		(direction(o2) == 0 && onSegment(p,q,s)) || 
 		(direction(o3) == 0 && onSegment(r,s,p)) || 
@@ -214,8 +230,10 @@ bool isIntersect(Point p, Point q, Point r, Point s){
 
 
 bool intersectTriangles(Point p, Point q){
+	/*
+		Returns true if line intersect a triangle.
+	*/
 	int k;
-
 	for (k=0; k<line_count; k++){
 		if (isIntersect(p, q, triangles[k].p, triangles[k].q) ||
 			isIntersect(p, q, triangles[k].q, triangles[k].r) ||
@@ -228,6 +246,10 @@ bool intersectTriangles(Point p, Point q){
 }
 
 void start_graph(Point start, Point target){
+	/*
+		Retrieve all line segments given that they don't 
+		intersect with or lay in any triangles.
+	*/
 	int i,j, k;
 	Point p, q;
 	
@@ -251,6 +273,9 @@ void start_graph(Point start, Point target){
 }
 
 int minimum_distance(int distance[], int processed[]){
+	/*
+		Return the index with minimum distance that hasn't been visited.
+	*/
 	int min = INT_MAX; 
 	int min_index=0;
 	int i;
