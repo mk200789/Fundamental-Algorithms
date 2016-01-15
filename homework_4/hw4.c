@@ -48,6 +48,10 @@ XColor green_col, red_col, black_col, blue_col;
 Colormap colormap;
 
 Point point[MAX_VERTICES];
+Point line_segment[MAX_VERTICES][MAX_VERTICES][2];
+int DEST = 1;
+int ORIG = 0;
+int num_line_segment;
 int line_count;
 
 char green[] = "#1F8728";
@@ -64,6 +68,19 @@ int find_distance(Point a, Point b){
 }
 
 void TSP(){
+	return;
+}
+
+void get_segment(){
+	printf("get_segment()\n");
+	int i, j;
+	for(i=0; i<line_count; i++){
+		for (j=0; j<line_count; j++){
+			line_segment[i][j][ORIG] = point[i];
+			line_segment[i][j][DEST] = point[j];
+			printf("%d %d\n", line_segment[i][j][ORIG].x, line_segment[i][j][ORIG].y);
+		}
+	}
 	return;
 }
 
@@ -151,7 +168,7 @@ int main(int argc, char *argv[]){
 
 	red_gc = XCreateGC(display, win, 0, 0);
 	XParseColor(display, colormap, red, &red_col);
-	XSetLineAttributes(display, red_gc, 2, LineSolid, CapRound, JoinRound);
+	//XSetLineAttributes(display, red_gc, 2, LineSolid, CapRound, JoinRound);
 	if (XAllocColor(display, colormap, &red_col) == 0){
 		printf("Failed to get color red\n");
 		exit(-1);
@@ -204,9 +221,10 @@ int main(int argc, char *argv[]){
 
 		printf("Total points: %d\n", line_count);
 
-		if (line_count < 0){
+		if (line_count < 20){
 			//If the number of points is less than 20, you use the Held-Karp algorithm 
 			//to compute the optimum TSP tour.
+			get_segment();
 		}
 		else{
 			//If the number is greater than 20, you sort the points according to the First
@@ -226,7 +244,15 @@ int main(int argc, char *argv[]){
 					for (i=0; i<line_count;i++){
 						XFillArc( display, win, black_gc, point[i].x, point[i].y, win_width/200, win_width/200, 0, 360*64);
 					}
+
+					int j;
+					for(i=0; i<line_count; i++){
+						for(j=0; j<line_count; j++){
+							XDrawLine(display, win, red_gc, line_segment[i][j][ORIG].x, line_segment[i][j][ORIG].y, line_segment[i][j][DEST].x, line_segment[i][j][DEST].y);
+						}
+					}
 				}
+
 				XFlush(display);
 				break;
 			}
