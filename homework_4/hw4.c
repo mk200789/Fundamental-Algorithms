@@ -1,3 +1,12 @@
+/* 
+	Compiles and run with command lines
+			gcc -o assign hw4.c -lX11 -lm -L/usr/X11R6/lib
+			./assign test_in
+	Homework #1
+	Wan Kim Mok
+	Due: September 30, 2015
+	valgrind --leak-check=full ./assign1 test_in
+*/
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
@@ -5,6 +14,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
+typedef enum { false, true } bool;
+#define MAX_VERTICES 200
+
+typedef struct{
+	int x;
+	int y;
+}Point;
 
 Display *display;
 Screen *screen;
@@ -30,37 +47,19 @@ GC gc, green_gc, red_gc, black_gc, blue_gc;
 XColor green_col, red_col, black_col, blue_col;
 Colormap colormap;
 
+Point point[MAX_VERTICES];
+int line_count;
+
 char green[] = "#1F8728";
 char red[] = "#FF3333";
 char black[] = "#000000";
 char blue[] = "#0000FF";
 
 int main(int argc, char *argv[]){
-	/*
+
 	FILE *fp;
 	fp = fopen(argv[1], "r");
-
-	int previous_val = 0;
-	if (fp == NULL){
-		//If there's no file, print message and exit.
-		printf("There's no file.\n");
-		exit(0);
-	}
-	else{
-		if( (display = XOpenDisplay(display_name)) == NULL ){ 
-			printf("Could not open display. \n"); 
-			exit(-1);
-		}
-		printf("Connected to X server  %s\n", XDisplayName(display_name) );
-		
-		screen_num = DefaultScreen(display);
-		screen = DefaultScreenOfDisplay(display);
-		colormap = XDefaultColormap(display, screen_num);
-		display_width = DisplayWidth(display, screen_num);
-		display_height = DisplayHeight(display, screen_num);
-
-	}
-*/
+	int i, x, y;
 
 	if( (display = XOpenDisplay(display_name)) == NULL ){ 
 		printf("Could not open display. \n"); 
@@ -73,6 +72,7 @@ int main(int argc, char *argv[]){
 	colormap = XDefaultColormap(display, screen_num);
 	display_width = DisplayWidth(display, screen_num);
 	display_height = DisplayHeight(display, screen_num);
+
 
 	//Creating window
 	border_width = 10;
@@ -165,5 +165,81 @@ int main(int argc, char *argv[]){
 		XSetForeground(display, blue_gc, blue_col.pixel);	
 	}
 
+	line_count = 0;
+	bool hasInput = false;
+	bool complete = false;
+
+	if (fp == NULL){
+		//enter points by mouse click
+		printf("There's no file. Left click graph to enter a point and right click to end input phase.\n");
+	}
+	else{
+		//using input file
+		printf("Reading file input coordinates\n");
+		fscanf(fp, "%d %d", &x, &y);
+		while(!feof(fp)){
+			point[line_count].x = x;
+			point[line_count++].y = y;
+			fscanf(fp, "%d %d", &x, &y);
+		}
+		complete = hasInput = true;
+		rewind(fp);
+
+	}
+
+
+	while(1){
+		XNextEvent(display, &report);
+		switch(report.type){
+			case Expose:
+			{	
+				if (line_count){
+					for (i=0; i<line_count;i++){
+						XFillArc( display, win, black_gc, point[i].x, point[i].y, win_width/200, win_width/200, 0, 360*64);
+					}
+				}
+				XFlush(display);
+				break;
+			}
+
+			case ButtonPress:
+			{
+
+				if (report.xbutton.button == Button1){
+					//left click
+
+					if (!hasInput){
+						//save input points via left mouseclick
+						point[line_count].x = report.xbutton.x;
+						point[line_count].y = report.xbutton.y;
+						XFillArc( display, win, black_gc, point[line_count].x, point[line_count].y, win_width/200, win_width/200, 0, 360*64);
+						printf("Input (%d, %d)\n", point[line_count].x, point[line_count].y);
+						line_count++;
+					}
+
+				}
+				else{
+					//right click : 1) end input points 2)close window
+					if (!hasInput && !complete){
+						printf("End input\n");
+						complete = true;
+					}
+					else{
+						// close graphics
+						printf("Closing Window.\n");
+						XDestroyWindow(display, win);
+						XCloseDisplay(display);
+						exit(1);
+					}
+					
+				}
+				
+				break;
+			}
+			default:
+				break;
+		}
+	}
+	fclose(fp);
 	return 0;
 }
