@@ -55,6 +55,23 @@ char red[] = "#FF3333";
 char black[] = "#000000";
 char blue[] = "#0000FF";
 
+
+int find_distance(Point a, Point b){
+	/*
+		Returns the distance between two points using Euclidean.
+	*/
+	return (int) sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+}
+
+void TSP(){
+	return;
+}
+
+void HeldKarp(){
+	//Use Held Karp algorithm for points less than 20
+	return;
+}
+
 int main(int argc, char *argv[]){
 
 	FILE *fp;
@@ -185,6 +202,18 @@ int main(int argc, char *argv[]){
 		complete = hasInput = true;
 		rewind(fp);
 
+		printf("Total points: %d\n", line_count);
+
+		if (line_count < 0){
+			//If the number of points is less than 20, you use the Held-Karp algorithm 
+			//to compute the optimum TSP tour.
+		}
+		else{
+			//If the number is greater than 20, you sort the points according to the First
+			//coordinate, divide the set into groups of at most twenty, and solve each group 
+			//optimally; after that, you find the optimal connection between the groups.
+		}
+
 	}
 
 
@@ -222,6 +251,17 @@ int main(int argc, char *argv[]){
 					//right click : 1) end input points 2)close window
 					if (!hasInput && !complete){
 						printf("End input\n");
+						printf("Total points: %d\n", line_count);
+
+						if (line_count < 0){
+							//If the number of points is less than 20, you use the Held-Karp algorithm 
+							//to compute the optimum TSP tour.
+						}
+						else{
+							//If the number is greater than 20, you sort the points according to the First
+							//coordinate, divide the set into groups of at most twenty, and solve each group 
+							//optimally; after that, you find the optimal connection between the groups.
+						}
 						complete = true;
 					}
 					else{
