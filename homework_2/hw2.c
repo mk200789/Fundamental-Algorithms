@@ -1,13 +1,8 @@
 /* 
    Compiles and run with command lines  
-   on mac osx: 
-               gcc -o hw2 hw2.c
-               limit -s hard [optional]
-               ./hw2
-   on ubuntu/linux:
-               gcc -o hw2 hw2.c
-               ulimit -s unlimited
-               ./hw2
+         gcc -o hw2 hw2.c
+         ulimit -s unlimited
+         ./hw2
    Homework #2
    Wan Kim Mok
    Due: November 04, 2015
@@ -339,4 +334,3 @@ for( i=400000; i< 500000; i++ )
    free(b);
    return 0;
 }
-
