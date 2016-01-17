@@ -11,9 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-int const N = 600000, M = 4;
-
+double A[600000][4],  b[600000], c[4] ;
+double result[4];
 
 int update_matrix(double matrix_b[], double result[]){
    double sum = 0;
@@ -101,7 +100,8 @@ int calculate_result(double matrix_a[][5], double result[]){
 
 
 //int rand_lp(int n, double *A, double *b, double *c, double *result){
-int rand_lp(int n, double **A, double b[], double c[], double result[]){
+//int rand_lp(int n, double **A, double b[], double c[], double result[]){
+int rand_lp(int n, double A[][4], double b[], double c[], double result[]){
    int row = 4, col = 5;
    int steps = 0; //Keep track of recomputation steps
    int inequality1 = 0, inequality2 = 1, inequality3 = 2 , inequality4 = 3;
@@ -247,22 +247,7 @@ int rand_lp(int n, double **A, double b[], double c[], double result[]){
 
 int main()
 {  
-   //double A[600000][4],  b[600000], c[4] ;
    int i, j; double s, t;
-   double **A, *b, c[M];
-   double result[M];
-   
-   //allocate an array of N pointers to double
-   //malloc returns the adress of this array (a pointer to (double *))
-   A = (double **)malloc(sizeof(double *)*N);
-
-   //for each row, allocate an array size of M pointers to double
-   for (i=0; i<N; i++){
-      A[i] = (double *)malloc(sizeof(double)*M);
-   }
-   
-   //allocate an array of N pointers to double
-   b = (double *)malloc(sizeof(double)*N);
 
    printf("Preparing test: 4 variables, 600000 inequalities\n");
    A[0][0] = 1.0; A[0][1] = 2.0; A[0][2] = 1.0; A[0][3] = 0.0; b[0] = 10000.0;
@@ -330,7 +315,7 @@ for( i=400000; i< 500000; i++ )
    printf("Test: extremal point (%f, %f, %f, %f) after %d recomputation steps\n", result[0], result[1], result[2], result[3], j);
    
    printf("Answer should be (1,2,3,4)\n End Test\n");
-   free(A);
-   free(b);
+   //free(A);
+   //free(b);
    return 0;
 }
