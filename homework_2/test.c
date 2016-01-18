@@ -70,4 +70,3 @@ main()
           result[0], result[1], result[2], result[3], j);
    printf("Answer should be (1,2,3,4)\n End Test\n");
 }
-
